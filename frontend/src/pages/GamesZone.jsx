@@ -33,8 +33,8 @@ export default function GamesZone() {
 
   if (loading) return <div className="flex items-center justify-center h-full"><p className="text-slate-400">Loading...</p></div>;
 
-  const xpToNext = myStats ? (myStats.level * 100) - myStats.points : 100;
-  const xpPct    = myStats ? ((myStats.points % 100) / 100) * 100 : 0;
+  const xpToNext = myStats ? 100 - (myStats.xp % 100) : 100;
+  const xpPct    = myStats ? myStats.xp % 100 : 0;
 
   return (
     <div className="p-8">

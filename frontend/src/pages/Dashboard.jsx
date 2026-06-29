@@ -1,134 +1,622 @@
-// 📊 Dashboard Page — كمال's task
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, CheckCircle, Clock, Circle, Trash2 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import useTaskStore from '../store/taskStore';
-import useAuthStore from '../store/authStore';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FaCalendarAlt, FaPlus, FaRobot, FaEllipsisH, FaTimes, 
+  FaPlay, FaPause, FaEdit, FaTrash, FaInfoCircle, FaChevronRight,
+  FaTrophy, FaChartLine, FaChartBar, FaClock, FaStop
+} from 'react-icons/fa';
+import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import useTaskStore from '../store/useTaskStore';
+import useUserStore from '../store/useUserStore';
+import usePageTitle from '../hooks/usePageTitle';
+import api from '../api/axios';
 
-const priorityColor = { high: 'text-red-400', medium: 'text-yellow-400', low: 'text-green-400' };
-const statusColor   = { done: 'bg-green-500/20 text-green-400', 'in-progress': 'bg-yellow-500/20 text-yellow-400', todo: 'bg-slate-500/20 text-slate-400' };
+function Dashboard() {
+  const tasks = useTaskStore((s) => s.tasks);
+  const addTask = useTaskStore((s) => s.addTask);
+  const updateTask = useTaskStore((s) => s.updateTask);
+  const deleteTask = useTaskStore((s) => s.deleteTask);
+  const userName = useUserStore((s) => s.userName);
+  
+  const [timeRange, setTimeRange] = useState('All Time');
+  const [showTimeDropdown, setShowTimeDropdown] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentTaskId, setCurrentTaskId] = useState(null);
+  
+  const [newTitle, setNewTitle] = useState('');
+  const [newPriority, setNewPriority] = useState('medium');
 
-export default function Dashboard() {
-  const { user } = useAuthStore();
-  const { tasks, stats, loading, fetchTasks, fetchStats, createTask, updateTask, deleteTask } = useTaskStore();
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', priority: 'medium', deadline: '' });
+  // ⏱️ الـ States الجديدة والمطورة للـ Pomodoro
+  const [expandedTaskId, setExpandedTaskId] = useState(null); // الـ Task المفتوح السكشن بتاعها
+  const [activeTimerTaskId, setActiveTimerTaskId] = useState(null); // الـ Task الشغالة حالياً
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // الوقت الفعلي بالثواني
+  const [isTimerRunning, setIsTimerRunning] = useState(false); // حالة التشغيل
+  const [customMinutes, setCustomMinutes] = useState('25'); // الإدخال اليدوي للدقائق
 
-  useEffect(() => { fetchTasks(); fetchStats(); }, []);
+  usePageTitle('Dashboard');
 
-  const handleCreate = async (e) => {
+  // عدّاد الثواني (Pomodoro Engine)
+  useEffect(() => {
+    let interval = null;
+    if (isTimerRunning && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setIsTimerRunning(false);
+      alert("⏱️ Pomodoro session finished! Masterfully done.");
+      setActiveTimerTaskId(null);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timeLeft]);
+
+  // دالة تشغيل أو إيقاف التايمر مؤقتاً
+  const toggleTimer = (taskId) => {
+    if (activeTimerTaskId === taskId) {
+      setIsTimerRunning(!isTimerRunning);
+    } else {
+      // لو مفيش تايمر شغال، ابدأ فوراً بالوقت الحالي المظبوط
+      setActiveTimerTaskId(taskId);
+      setIsTimerRunning(true);
+    }
+  };
+
+  // إلغاء التايمر بالكامل عشان تقدر تظبط تايمر جديد
+  const resetTimer = () => {
+    setIsTimerRunning(false);
+    setActiveTimerTaskId(null);
+    setTimeLeft(25 * 60);
+  };
+
+  // دالة تظبيط الوقت من الأزرار الثابتة أو اليدوي (ممنوع لو التايمر شغال)
+  const setTaskDuration = (minutes) => {
+    if (isTimerRunning) {
+      alert("⚠️ Cannot change duration while a timer is running. Stop the current timer first!");
+      return;
+    }
+    const mins = parseInt(minutes, 10);
+    if (!isNaN(mins) && mins > 0 && mins <= 180) {
+      setTimeLeft(mins * 60);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // حساب الـ Level والـ XP ديناميكياً
+  const userStats = useMemo(() => {
+    const total = tasks.length;
+    const completedTasks = tasks.filter((t) => t.completed);
+    const completedCount = completedTasks.length;
+    
+    const totalEarnedXp = completedCount * 500; 
+    const currentLevel = 1 + Math.floor(totalEarnedXp / 1000);
+    const xpInCurrentLevel = totalEarnedXp % 1000;
+    const xpProgressPercentage = (xpInCurrentLevel / 1000) * 100;
+
+    return {
+      total,
+      completedCount,
+      percentage: total === 0 ? 0 : Math.round((completedCount / total) * 100),
+      currentLevel,
+      xpInCurrentLevel,
+      xpProgressPercentage,
+      totalEarnedXp
+    };
+  }, [tasks]);
+
+  // حساب بيانات الـ Focus Intensity للأيام الحقيقية
+  const dynamicBarData = useMemo(() => {
+    const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const initialData = { MON: 0, TUE: 0, WED: 0, THU: 0, FRI: 0, SAT: 0, SUN: 0 };
+    
+    tasks.forEach(task => {
+      if (task.createdAt) {
+        const date = new Date(task.createdAt);
+        const dayName = daysOfWeek[date.getDay()];
+        if (initialData[dayName] !== undefined) {
+          initialData[dayName] += task.completed ? 35 : 15;
+        }
+      }
+    });
+
+    const order = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    return order.map(day => ({
+      day,
+      value: initialData[day] === 0 ? Math.floor(Math.random() * 25) + 15 : Math.min(100, initialData[day])
+    }));
+  }, [tasks]);
+
+  const filteredTasksByTime = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    return tasks.filter((task) => {
+      if (timeRange === 'Today') return new Date(task.createdAt).toDateString() === todayStr;
+      if (timeRange === 'This Week') return new Date(task.createdAt) >= oneWeekAgo;
+      return true;
+    });
+  }, [tasks, timeRange]);
+
+  // حساب ساعات التركيز بناءً على جلسات بومودورو المكتملة
+  const focusMetrics = useMemo(() => {
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+    const totalPomodorosAll = tasks.reduce((s, t) => s + (t.pomodoroCompleted || 0), 0);
+    const totalHoursAll = (totalPomodorosAll * 25) / 60;
+
+    const pomodorosThisWeek = tasks
+      .filter((t) => new Date(t.createdAt) >= oneWeekAgo)
+      .reduce((s, t) => s + (t.pomodoroCompleted || 0), 0);
+    const hoursThisWeek = (pomodorosThisWeek * 25) / 60;
+
+    const pomodorosPrevWeek = tasks
+      .filter((t) => {
+        const d = new Date(t.createdAt);
+        return d >= twoWeeksAgo && d < oneWeekAgo;
+      })
+      .reduce((s, t) => s + (t.pomodoroCompleted || 0), 0);
+    const hoursPrevWeek = (pomodorosPrevWeek * 25) / 60;
+
+    const percentageChange = hoursPrevWeek === 0 ? (hoursThisWeek > 0 ? 100 : 0) : Math.round(((hoursThisWeek - hoursPrevWeek) / hoursPrevWeek) * 100);
+
+    return {
+      totalPomodorosAll,
+      totalHoursAll,
+      pomodorosThisWeek,
+      hoursThisWeek,
+      pomodorosPrevWeek,
+      hoursPrevWeek,
+      percentageChange,
+    };
+  }, [tasks]);
+
+  const openCreateModal = () => {
+    setIsEditing(false);
+    setNewTitle('');
+    setNewPriority('medium');
+    setShowModal(true);
+  };
+
+  const openEditModal = (task) => {
+    setIsEditing(true);
+    setCurrentTaskId(task.id);
+    setNewTitle(task.title);
+    setNewPriority(task.priority);
+    setShowModal(true);
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.title) return toast.error('Title is required');
-    const res = await createTask(form);
-    if (res.success) { toast.success('Task created!'); setShowForm(false); setForm({ title: '', description: '', priority: 'medium', deadline: '' }); fetchStats(); }
-    else toast.error(res.message);
+    if (!newTitle.trim()) return;
+
+    if (isEditing) {
+      updateTask(currentTaskId, { title: newTitle, priority: newPriority });
+    } else {
+      addTask({
+        id: Date.now().toString(),
+        title: newTitle,
+        priority: newPriority,
+        completed: false,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    setShowModal(false);
   };
 
-  const handleStatus = async (id, status) => {
-    await updateTask(id, { status });
-    fetchStats();
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this task?')) return;
-    const res = await deleteTask(id);
-    if (res.success) { toast.success('Deleted'); fetchStats(); }
-  };
+  const dataPie = [{ value: 92 }, { value: 8 }];
+  const currentDayName = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date().getDay()];
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Good day, {user?.name} 👋</h1>
-          <p className="text-slate-400 mt-1">Here's what's on your plate</p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus size={16} /> New Task
-        </button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Total',       value: stats.total,      icon: Circle,      color: 'text-blue-400'   },
-          { label: 'Todo',        value: stats.todo,       icon: Circle,      color: 'text-slate-400'  },
-          { label: 'In Progress', value: stats.inProgress, icon: Clock,       color: 'text-yellow-400' },
-          { label: 'Done',        value: stats.done,       icon: CheckCircle, color: 'text-green-400'  },
-        ].map((s) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-800 rounded-xl p-5 border border-slate-700">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-400 text-sm">{s.label}</p>
-              <s.icon size={16} className={s.color} />
-            </div>
-            <p className="text-3xl font-bold text-white">{s.value}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Create form */}
-      {showForm && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-          className="bg-slate-800 rounded-xl p-6 border border-slate-700 mb-6">
-          <h3 className="text-white font-semibold mb-4">Create New Task</h3>
-          <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
-            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Task title *" className="col-span-2 bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm border border-slate-600 focus:outline-none focus:border-blue-500" />
-            <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Description (optional)" className="col-span-2 bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm border border-slate-600 focus:outline-none focus:border-blue-500" />
-            <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}
-              className="bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm border border-slate-600 focus:outline-none focus:border-blue-500">
-              <option value="low">Low Priority</option>
-              <option value="medium">Medium Priority</option>
-              <option value="high">High Priority</option>
-            </select>
-            <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-              className="bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm border border-slate-600 focus:outline-none focus:border-blue-500" />
-            <div className="col-span-2 flex gap-3 justify-end">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-slate-400 hover:text-white text-sm">Cancel</button>
-              <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Create</button>
-            </div>
-          </form>
-        </motion.div>
-      )}
-
-      {/* Tasks list */}
-      <div className="space-y-3">
-        {loading && <p className="text-slate-400 text-center py-8">Loading tasks...</p>}
-        {!loading && tasks.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-500 text-lg">No tasks yet</p>
-            <p className="text-slate-600 text-sm mt-1">Click "New Task" to get started</p>
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 p-2 text-slate-300 antialiased font-sans">
+      
+      {/* القسم العلوي: الهيدر والأزرار */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
+            <p className="mt-1 text-sm text-slate-400">Welcome back, {userName || 'Kamal'}. Your deep work streak is at 12 days.</p>
           </div>
-        )}
-        {tasks.map((task) => (
-          <motion.div key={task._id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-            className="bg-slate-800 rounded-xl px-5 py-4 border border-slate-700 flex items-center gap-4">
-            <div className="flex-1">
-              <p className={`font-medium text-white ${task.status === 'done' ? 'line-through text-slate-500' : ''}`}>{task.title}</p>
-              {task.description && <p className="text-slate-400 text-sm mt-0.5">{task.description}</p>}
-              <div className="flex items-center gap-3 mt-2">
-                <span className={`text-xs font-medium ${priorityColor[task.priority]}`}>{task.priority} priority</span>
-                {task.deadline && <span className="text-xs text-slate-500">Due: {new Date(task.deadline).toLocaleDateString()}</span>}
+          
+          <div className="flex items-center gap-3 relative self-start sm:self-center">
+            <div className="relative">
+              <button 
+                onClick={() => setShowTimeDropdown(!showTimeDropdown)} 
+                className="inline-flex items-center gap-2 rounded-xl bg-[#161622] px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition border border-white/[0.05]"
+              >
+                <FaCalendarAlt className="text-slate-400" />
+                {timeRange}
+              </button>
+              
+              {showTimeDropdown && (
+                <div className="absolute right-0 mt-2 bg-[#161622] border border-white/10 rounded-xl py-1 w-32 shadow-xl z-50 text-xs">
+                  {['Today', 'This Week', 'All Time'].map((option) => (
+                    <button 
+                      key={option}
+                      onClick={() => { setTimeRange(option); setShowTimeDropdown(false); }}
+                      className="w-full text-left px-3 py-2 hover:bg-white/5 text-slate-300"
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button 
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-fuchsia-500/10 transition hover:opacity-90"
+            >
+              <FaPlus />
+              New Widget
+            </button>
+          </div>
+        </div>
+
+        {/* كروت المستوى والـ AI */}
+        <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
+          <div className="relative overflow-hidden rounded-3xl bg-[#13131a] p-6 border border-white/[0.04]">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Current Standing</p>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="text-5xl font-black tracking-tight text-white">Level {userStats.currentLevel}</span>
+                  <span className="text-sm font-semibold text-purple-400">+{userStats.totalEarnedXp || '1,240'} XP</span>
+                </div>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.03] border border-white/[0.08] text-purple-400">
+                <FaTrophy size={16} />
               </div>
             </div>
-            <select value={task.status} onChange={(e) => handleStatus(task._id, e.target.value)}
-              className={`text-xs px-3 py-1.5 rounded-full border-0 font-medium cursor-pointer ${statusColor[task.status]}`}>
-              <option value="todo">Todo</option>
-              <option value="in-progress">In Progress</option>
-              <option value="done">Done</option>
-            </select>
-            <button onClick={() => handleDelete(task._id)} className="text-slate-600 hover:text-red-400 transition-colors">
-              <Trash2 size={16} />
-            </button>
-          </motion.div>
-        ))}
+
+            <div className="mt-8">
+              <div className="flex justify-between text-xs font-medium text-slate-400">
+                <span>Mastery Progress</span>
+                <span className="text-slate-300">{userStats.xpInCurrentLevel} / 1,000 XP</span>
+              </div>
+              <div className="mt-2.5 h-2 w-full rounded-full bg-white/[0.06]">
+                <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" style={{ width: `${userStats.xpProgressPercentage || 87}%` }} />
+              </div>
+            </div>
+
+            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-white/[0.04] pt-5">
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Rank</p><p className="mt-1 text-lg font-bold text-white">Archon</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Weekly Streak</p><p className="mt-1 text-lg font-bold text-white">12 Days</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Global Top</p><p className="mt-1 text-lg font-bold text-purple-400">2.4%</p></div>
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-between rounded-3xl bg-[#13131a] p-6 text-center border border-white/[0.04]">
+            <div className="flex flex-col items-center pt-2">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-950/40 border border-purple-500/20 text-purple-400"><FaRobot className="text-2xl" /></div>
+              <h3 className="text-lg font-bold text-white tracking-wide">Focus with AI-Robo Advisor!</h3>
+              <p className="mt-2 px-4 text-xs leading-relaxed text-slate-400">Get automated schedule management, real-time insights, and personalized work advice.</p>
+            </div>
+            <button className="mt-6 w-full rounded-xl bg-white/[0.04] border border-white/[0.08] py-2.5 text-xs font-semibold text-white transition hover:bg-white/[0.08]">Try Now</button>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* القسم الأوسط: كروت الإحصائيات (تطابق الصورة بالملي) */}
+      <div className="grid gap-4 md:grid-cols-3">
+        
+        {/* 1. كارت HOURS FOCUSED */}
+        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex flex-col justify-between h-[170px]">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Hours Focused</p>
+            <span className="text-[10px] bg-white/5 border border-white/10 text-purple-400 rounded-md px-1.5 py-0.5 inline-flex items-center gap-1">
+              <FaChartLine className="text-[9px]" /> {focusMetrics.percentageChange}%
+            </span>
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-4xl font-bold text-white tracking-tight">{focusMetrics.hoursThisWeek ? focusMetrics.hoursThisWeek.toFixed(1) + 'h' : '0.0h'}</span>
+            <span className="text-xs text-slate-500">this week</span>
+          </div>
+          <div className="h-10 w-full mt-2 opacity-50">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[{v:20},{v:30},{v:15},{v:60},{v:45},{v:30},{v:70}]}>
+                <Bar dataKey="v" fill="#c084fc" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* 2. كارت DEEP SESSIONS */}
+        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex flex-col justify-between h-[170px]">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Deep Sessions</p>
+            <FaEllipsisH className="text-xs text-slate-500 cursor-pointer" />
+          </div>
+          <div className="my-auto">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-4xl font-bold text-white tracking-tight">
+                {userStats.completedCount || '12'}
+              </span>
+              <span className="text-sm font-semibold text-slate-500">
+                /{userStats.total || '15'} goal
+              </span>
+            </div>
+          </div>
+          <div className="w-full">
+            <div className="h-1.5 w-full rounded-full bg-white/[0.06]">
+              <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" style={{ width: `${userStats.percentage || 80}%` }} />
+            </div>
+            <div className="flex justify-between text-[9px] text-slate-500 mt-2 font-medium">
+              <span>Daily Target</span>
+              <span className="text-slate-400 font-bold">{userStats.percentage || 80}% complete</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. كارت FLOW EFFICIENCY */}
+        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex items-center justify-between h-[170px]">
+          <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={dataPie} innerRadius={28} outerRadius={36} dataKey="value" startAngle={90} endAngle={-270}>
+                  <Cell fill="#a855f7" stroke="none" />
+                  <Cell fill="rgba(255,255,255,0.04)" stroke="none" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <span className="absolute text-xs font-black text-white">92%</span>
+          </div>
+          
+          <div className="flex flex-col justify-center flex-1 pl-5 space-y-1">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Flow Efficiency</p>
+              <FaInfoCircle className="text-[10px] text-slate-600" />
+            </div>
+            <h4 className="text-xs font-bold text-white pt-1 tracking-wide">Peak focus at 11:00 AM</h4>
+            <p className="text-[10px] text-slate-500 leading-normal">Optimal environment: Dark Theme</p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* القسم السفلي: المهمات مع الـ Dropdown الرهيب للتايمر */}
+      <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
+        
+        {/* قائمة المهمات النشطة */}
+        <div className="rounded-3xl bg-[#13131a]/60 p-6 border border-white/[0.04]">
+          <div className="flex items-center justify-between border-b border-white/[0.04] pb-4">
+            <h2 className="text-base font-bold text-white tracking-wide">Active Flow Tasks</h2>
+            <button className="text-xs font-semibold text-purple-400 hover:underline flex items-center gap-1">
+              View All <FaChevronRight size={8} />
+            </button>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {filteredTasksByTime.map((task) => {
+              const isCurrentTimer = activeTimerTaskId === task.id;
+              const isExpanded = expandedTaskId === task.id;
+              
+              return (
+                <div key={task.id} className="flex flex-col rounded-2xl bg-[#161622]/40 border border-white/[0.02] overflow-hidden transition-all">
+                  
+                  {/* السطر الأساسي للتاسك */}
+                  <div className={`flex items-center justify-between p-4 ${task.completed ? 'opacity-40' : ''}`}>
+                    <div className="flex items-start gap-4 flex-1">
+                      <input 
+                        type="checkbox" 
+                        checked={task.completed} 
+                        onChange={() => useTaskStore.getState().toggleTask(task.id)}
+                        className="mt-1 h-4 w-4 rounded-md border-white/20 bg-transparent text-purple-600 focus:ring-0 cursor-pointer" 
+                      />
+                      <div>
+                        <p className={`text-sm font-medium ${task.completed ? 'text-slate-400 line-through' : 'text-white'}`}>{task.title}</p>
+                        <div className="mt-2 flex items-center gap-3">
+                          <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${task.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                            {task.priority} Priority
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {/* زرار فتح درج التايمر */}
+                      {!task.completed && (
+                        <button 
+                          onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                          className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 bg-white/[0.02] border transition text-xs font-mono font-bold ${isCurrentTimer && isTimerRunning ? 'border-purple-500/40 text-purple-400 animate-pulse' : 'border-white/[0.05] text-slate-400 hover:bg-white/5'}`}
+                        >
+                          <FaClock size={11} className={isCurrentTimer && isTimerRunning ? 'animate-spin' : ''} />
+                          {isCurrentTimer ? formatTime(timeLeft) : "Set Timer"}
+                        </button>
+                      )}
+
+                      <div className="flex items-center gap-1 border-l border-white/[0.05] pl-2">
+                        <button onClick={() => openEditModal(task)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-purple-400 transition">
+                          <FaEdit size={12} />
+                        </button>
+                        <button onClick={() => deleteTask(task.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition">
+                          <FaTrash size={11} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 📥 الدرج المنبثق (التايمر المصغر المخصص لكل تاسك) */}
+                  <AnimatePresence>
+                    {isExpanded && !task.completed && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }} 
+                        animate={{ height: 'auto', opacity: 1 }} 
+                        exit={{ height: 0, opacity: 0 }}
+                        className="bg-black/20 border-t border-white/[0.03] px-4 py-3 space-y-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          {/* أزرار الأرقام الثابتة */}
+                          <div className="flex items-center gap-1.5">
+                            {[15, 20, 30, 60].map((mins) => (
+                              <button
+                                key={mins}
+                                disabled={isTimerRunning}
+                                onClick={() => setTaskDuration(mins)}
+                                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition ${isTimerRunning ? 'opacity-30 cursor-not-allowed border-white/5 bg-transparent text-slate-600' : 'border-white/5 bg-white/[0.02] text-slate-400 hover:border-purple-500/30 hover:text-white'}`}
+                              >
+                                {mins}m
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* الإدخال اليدوي (Manually) */}
+                          <div className="flex items-center gap-1.5">
+                            <input 
+                              type="number"
+                              disabled={isTimerRunning}
+                              value={customMinutes}
+                              onChange={(e) => setCustomMinutes(e.target.value)}
+                              placeholder="Min"
+                              className="w-12 text-center bg-white/[0.02] border border-white/10 rounded-lg py-0.5 text-xs text-white outline-none focus:border-purple-500/40 disabled:opacity-40"
+                            />
+                            <button
+                              disabled={isTimerRunning}
+                              onClick={() => setTaskDuration(customMinutes)}
+                              className="px-2 py-1 text-[10px] font-bold bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg transition disabled:opacity-30"
+                            >
+                              Apply
+                            </button>
+                          </div>
+
+                          {/* أزرار التحكم الفورية (Play / Pause / Stop) */}
+                          <div className="flex items-center gap-2 ml-auto">
+                            <span className="text-sm font-mono font-bold text-white mr-1">
+                              {isCurrentTimer ? formatTime(timeLeft) : "Ready"}
+                            </span>
+                            <button
+                              onClick={() => toggleTimer(task.id)}
+                              className={`h-7 px-3 rounded-lg flex items-center justify-center gap-1 text-[10px] font-bold transition ${isCurrentTimer && isTimerRunning ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30' : 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30'}`}
+                            >
+                              {isCurrentTimer && isTimerRunning ? (
+                                <>
+                                  <FaPause size={8} /> Pause
+                                </>
+                              ) : (
+                                <>
+                                  <FaPlay size={8} /> Start
+                                </>
+                              )}
+                            </button>
+
+                            {/* زر الإلغاء الشامل لفك قفل السيستم وتغيير التايمر */}
+                            {isCurrentTimer && (
+                              <button
+                                onClick={resetTimer}
+                                className="h-7 w-7 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center transition"
+                                title="Cancel Timer"
+                              >
+                                <FaStop size={8} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* كارد FOCUS INTENSITY */}
+        <div className="rounded-3xl bg-[#13131a] p-6 border border-white/[0.04] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Focus Intensity</h3>
+              <div className="flex items-center gap-2 text-slate-500 text-xs">
+                <FaChartLine size={11} />
+                <FaChartBar size={11} />
+              </div>
+            </div>
+            
+            <div className="h-36 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dynamicBarData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                  <XAxis dataKey="day" tick={{ fill: '#475569', fontSize: 9, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={14}>
+                    {dynamicBarData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.day === currentDayName || entry.day === 'FRI' ? '#c084fc' : 'rgba(192, 132, 252, 0.35)'} 
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-2 text-[11px] border-t border-white/[0.03] pt-4 font-medium">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#a855f7]" />
+                <span className="text-slate-400">Deep Focus</span>
+              </div>
+              <span className="font-bold text-white tracking-wide">72%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#64748b]" />
+                <span className="text-slate-400">Maintenance</span>
+              </div>
+              <span className="font-bold text-white tracking-wide">18%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#334155]" />
+                <span className="text-slate-400">Misc</span>
+              </div>
+              <span className="font-bold text-white tracking-wide">10%</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* المودال */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#111118] border border-white/10 p-6 rounded-3xl w-full max-w-sm shadow-2xl relative">
+              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition"><FaTimes /></button>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-2 w-2 rounded-full bg-purple-500 animate-ping" />
+                <h3 className="text-base font-bold text-white">{isEditing ? 'Modify Active Task' : 'Launch New Flow Task'}</h3>
+              </div>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Task Name</label>
+                  <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="What are you focusing on?" className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-purple-500/50 focus:bg-white/[0.05] transition placeholder:text-slate-600" />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Set Priority Level</label>
+                  <div className="relative">
+                    <select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="w-full bg-[#161622] border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-purple-500/50 appearance-none cursor-pointer tracking-wide font-medium">
+                      <option value="low" className="bg-[#13131a] text-blue-400">Low Urgency</option>
+                      <option value="medium" className="bg-[#13131a] text-purple-400">Medium Focus</option>
+                      <option value="high" className="bg-[#13131a] text-orange-400">High Priority</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 text-[10px]">▼</div>
+                  </div>
+                </div>
+                <button type="submit" className="w-full mt-2 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 py-3 text-xs font-bold text-white shadow-lg shadow-purple-500/20 transition hover:opacity-95 tracking-wide">
+                  {isEditing ? 'Save Modifications' : '+ Add to Flow Queue'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+    </motion.div>
   );
 }
+
+export default Dashboard;
