@@ -13,13 +13,16 @@ function Layout() {
   const fetchTasks = useTaskStore((s) => s.fetchTasks);
   const fetchPomodoroHistory = useTaskStore((s) => s.fetchPomodoroHistory);
 
+  const fetchGamificationStats = useTaskStore((s) => s.fetchGamificationStats);
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchCurrentUser();
       fetchTasks();
       fetchPomodoroHistory();
+      fetchGamificationStats();
     }
-  }, [isAuthenticated, fetchCurrentUser, fetchTasks, fetchPomodoroHistory]);
+  }, [isAuthenticated, fetchCurrentUser, fetchTasks, fetchPomodoroHistory, fetchGamificationStats]);
 
   return (
     <div className='min-h-screen bg-midnight text-white'>

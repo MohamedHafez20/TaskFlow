@@ -5,8 +5,12 @@ import useTaskStore from '../store/useTaskStore';
 import { FaFire, FaCheckCircle, FaTrophy, FaCalendarAlt, FaShieldAlt } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
 
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const ORDERED_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
 function Analytics() {
   const tasks = useTaskStore((s) => s.tasks);
+  const pomodoroHistory = useTaskStore((s) => s.pomodoroHistory);
 
   const completionStats = useMemo(() => {
     const total = tasks.length;
@@ -46,15 +50,18 @@ function Analytics() {
 
   const COLORS = ['#8B5CF6', '#C084FC'];
 
-  const weeklyData = [
-    { day: 'Mon', value: 6 },
-    { day: 'Tue', value: 9 },
-    { day: 'Wed', value: 5 },
-    { day: 'Thu', value: 8 },
-    { day: 'Fri', value: 10 },
-    { day: 'Sat', value: 4 },
-    { day: 'Sun', value: 3 },
-  ];
+  const weeklyData = useMemo(() => {
+    const counts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    pomodoroHistory.forEach((session) => {
+      const date = new Date(session.completedAt);
+      if (date >= oneWeekAgo) {
+        const dayName = DAY_NAMES[date.getDay()];
+        if (dayName in counts) counts[dayName]++;
+      }
+    });
+    return ORDERED_DAYS.map((day) => ({ day, value: counts[day] }));
+  }, [pomodoroHistory]);
 
   usePageTitle('Analytics');
 
@@ -83,7 +90,7 @@ function Analytics() {
           { label: 'Total Tasks', value: completionStats.total, icon: FaCalendarAlt, color: 'text-cyan-300' },
           { label: 'Completed', value: completionStats.completed, icon: FaCheckCircle, color: 'text-emerald-300' },
           { label: 'Productivity', value: productivityScore + '%', icon: FaTrophy, color: 'text-violet-300' },
-          { label: 'Focus Burst', value: Math.max(1, completionStats.completed) + ' sessions', icon: FaFire, color: 'text-rose-300' },
+          { label: 'Focus Burst', value: pomodoroHistory.length + ' sessions', icon: FaFire, color: 'text-rose-300' },
         ].map((item) => (
           <div key={item.label} className='rounded-[28px] border border-white/10 bg-[#111118] p-6 shadow-glow backdrop-blur-xl'>
             <div className='flex items-center justify-between gap-4'>

@@ -78,6 +78,17 @@ const useUserStore = create(
           get().logout();
         }
       },
+
+      updateName: async (name) => {
+        try {
+          const { data } = await api.put('/auth/me', { name });
+          set({ userName: data.name });
+          return { success: true };
+        } catch (err) {
+          const msg = err.response?.data?.message || 'Failed to update name.';
+          return { success: false, message: msg };
+        }
+      },
     }),
     {
       name: "user-storage",

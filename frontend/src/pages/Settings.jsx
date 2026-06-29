@@ -7,13 +7,14 @@ import { useNavigate } from "react-router-dom";
 import usePageTitle from "../hooks/usePageTitle";
 
 function Settings() {
-  const { userName, setUserName } = useUserStore();
+  const userName = useUserStore((s) => s.userName);
+  const updateName = useUserStore((s) => s.updateName);
   const { showToast } = useToast();
   const [newName, setNewName] = useState(userName || "");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!newName.trim()) {
       showToast("Please enter your name!", "error");
       return;
@@ -35,13 +36,14 @@ function Settings() {
     }
 
     setIsLoading(true);
-    setUserName(newName.trim());
-    showToast("Name updated successfully! Redirecting to dashboard...", "success");
-
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate("/app/dashboard");
-    }, 1200);
+    const result = await updateName(newName.trim());
+    setIsLoading(false);
+    if (result.success) {
+      showToast("Name updated successfully! Redirecting to dashboard...", "success");
+      setTimeout(() => navigate("/app/dashboard"), 1200);
+    } else {
+      showToast(result.message || "Failed to update name.", "error");
+    }
   };
 
   usePageTitle("Settings");

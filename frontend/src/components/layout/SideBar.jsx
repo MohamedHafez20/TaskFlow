@@ -7,8 +7,8 @@ import { useToast } from '../Ui/ToastProvider';
 function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const userName = useUserStore((s) => s.userName) || 'Kamal Abou Eid'; // سحب الاسم ديناميكياً
-  const setUserName = useUserStore((s) => s.setUserName);
+  const userName = useUserStore((s) => s.userName) || 'Kamal Abou Eid';
+  const logout = useUserStore((s) => s.logout);
   const { showToast } = useToast();
 
   // 🎯 الحفاظ على نفس الصفحات القديمة بالملي كما هي
@@ -24,8 +24,8 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   ];
 
   const handleLogout = () => {
-    setUserName('');
-    navigate('/');
+    logout();
+    navigate('/login');
     showToast('Logged out successfully', 'success');
   };
 

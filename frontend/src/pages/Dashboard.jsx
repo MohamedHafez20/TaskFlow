@@ -9,7 +9,6 @@ import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, PieChart, Pie } from '
 import useTaskStore from '../store/useTaskStore';
 import useUserStore from '../store/useUserStore';
 import usePageTitle from '../hooks/usePageTitle';
-import api from '../api/axios';
 
 function Dashboard() {
   const tasks = useTaskStore((s) => s.tasks);

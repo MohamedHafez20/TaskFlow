@@ -22,6 +22,7 @@ function Pomodoro() {
   const addTask = useTaskStore((s) => s.addTask);
   const toggleTask = useTaskStore((s) => s.toggleTask);
   const updateTask = useTaskStore((s) => s.updateTask);
+  const completePomodoroSession = useTaskStore((s) => s.completePomodoroSession);
 
   const [mode, setMode] = useState('pomodoro');
   const [selectedDuration, setSelectedDuration] = useState(25);
@@ -97,9 +98,13 @@ function Pomodoro() {
           playAlert();
           
           if (activeSessionIdRef.current) {
-            api.put(`/pomodoro/${activeSessionIdRef.current}/complete`)
-              .catch(err => console.error("Failed to complete session on backend", err));
+            const sessionId = activeSessionIdRef.current;
             activeSessionIdRef.current = null;
+            completePomodoroSession(sessionId).then((result) => {
+              if (!result.success) {
+                console.error('Session completion rejected:', result.message);
+              }
+            });
           }
 
           if (activeTaskId) {

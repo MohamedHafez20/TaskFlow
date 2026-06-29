@@ -61,4 +61,18 @@ const getMe = asyncHandler(async (req, res) => {
   res.json(req.user);
 });
 
-module.exports = { register, login, getMe };
+const updateMe = asyncHandler(async (req, res) => {
+  const { name } = req.body;
+  if (!name || !name.trim()) {
+    res.status(400);
+    throw new Error('Name is required');
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { name: name.trim() },
+    { new: true, runValidators: true }
+  ).select('-password');
+  res.json(user);
+});
+
+module.exports = { register, login, getMe, updateMe };
