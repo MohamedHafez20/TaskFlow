@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, CartesianGrid, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
 import useTaskStore from '../store/useTaskStore';
-import { FaFire, FaCheckCircle, FaTrophy, FaCalendarAlt, FaShieldAlt } from 'react-icons/fa';
+import { FaFire, FaCheckCircle, FaTrophy, FaCalendarAlt, FaClock, FaShieldAlt } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const ORDERED_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const COLORS = ['#8B5CF6', '#C084FC', '#F472B6'];
 
 function Analytics() {
   const tasks = useTaskStore((s) => s.tasks);
@@ -37,124 +38,169 @@ function Analytics() {
     return categories;
   }, [tasks]);
 
-  const chartData = Object.entries(tasksByCategory).map(([category, tasks]) => ({
+  const chartData = Object.entries(tasksByCategory).map(([category, categoryTasks]) => ({
     name: category.charAt(0).toUpperCase() + category.slice(1),
-    total: tasks.length,
-    completed: tasks.filter((t) => t.completed).length,
+    total: categoryTasks.length,
+    completed: categoryTasks.filter((t) => t.completed).length,
   }));
 
   const pieData = [
     { name: 'Completed', value: completionStats.completed },
-    { name: 'Pending', value: completionStats.total - completionStats.completed },
+    { name: 'Pending', value: Math.max(0, completionStats.total - completionStats.completed) },
   ];
-
-  const COLORS = ['#8B5CF6', '#C084FC'];
 
   const weeklyData = useMemo(() => {
     const counts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
     pomodoroHistory.forEach((session) => {
       const date = new Date(session.completedAt);
       if (date >= oneWeekAgo) {
         const dayName = DAY_NAMES[date.getDay()];
-        if (dayName in counts) counts[dayName]++;
+        if (dayName in counts) counts[dayName] += 1;
       }
     });
+
     return ORDERED_DAYS.map((day) => ({ day, value: counts[day] }));
   }, [pomodoroHistory]);
 
   usePageTitle('Analytics');
 
+  const insightCards = [
+    { label: 'Total Tasks', value: completionStats.total, icon: FaCalendarAlt, color: 'text-cyan-300' },
+    { label: 'Completed', value: completionStats.completed, icon: FaCheckCircle, color: 'text-emerald-300' },
+    { label: 'Productivity', value: `${productivityScore}%`, icon: FaTrophy, color: 'text-violet-300' },
+    { label: 'Focus Sessions', value: `${pomodoroHistory.length}`, icon: FaFire, color: 'text-rose-300' },
+  ];
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className='space-y-8'
+      className='space-y-6'
     >
-      <div className='rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glow backdrop-blur-xl'>
-        <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
+      <section className='rounded-[32px] border border-white/[0.06] bg-[#111118] p-6 shadow-[0_10px_40px_rgba(0,0,0,0.25)]'>
+        <div className='flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between'>
           <div>
-            <p className='text-sm uppercase tracking-[0.25em] text-slate-500'>Analytics</p>
-            <h1 className='mt-3 text-4xl font-semibold text-white'>Productivity Intelligence</h1>
-            <p className='mt-3 max-w-2xl text-slate-300'>Visualize your focus performance, session analytics, and category trends in one dashboard.</p>
+            <p className='text-[11px] font-black uppercase tracking-[0.3em] text-slate-500'>Analytics</p>
+            <h1 className='mt-3 text-3xl font-semibold text-white'>Productivity overview</h1>
+            <p className='mt-2 max-w-2xl text-sm text-slate-400'>Track focus, task completion, and performance in a view that matches the rest of the app.</p>
           </div>
-          <div className='rounded-[28px] bg-[#111118] p-5 text-center ring-1 ring-violet-500/20'>
-            <p className='text-sm uppercase tracking-[0.25em] text-slate-500'>Efficiency</p>
-            <p className='mt-3 text-3xl font-semibold text-violet-300'>{productivityScore}%</p>
+          <div className='rounded-[24px] border border-purple-500/20 bg-purple-500/10 px-5 py-4 text-center'>
+            <p className='text-[10px] font-black uppercase tracking-[0.3em] text-slate-400'>Efficiency</p>
+            <p className='mt-2 text-3xl font-semibold text-purple-300'>{productivityScore}%</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className='grid gap-6 xl:grid-cols-4'>
-        {[
-          { label: 'Total Tasks', value: completionStats.total, icon: FaCalendarAlt, color: 'text-cyan-300' },
-          { label: 'Completed', value: completionStats.completed, icon: FaCheckCircle, color: 'text-emerald-300' },
-          { label: 'Productivity', value: productivityScore + '%', icon: FaTrophy, color: 'text-violet-300' },
-          { label: 'Focus Burst', value: pomodoroHistory.length + ' sessions', icon: FaFire, color: 'text-rose-300' },
-        ].map((item) => (
-          <div key={item.label} className='rounded-[28px] border border-white/10 bg-[#111118] p-6 shadow-glow backdrop-blur-xl'>
-            <div className='flex items-center justify-between gap-4'>
-              <div>
-                <p className='text-sm uppercase tracking-[0.25em] text-slate-500'>{item.label}</p>
-                <p className='mt-4 text-3xl font-semibold text-white'>{item.value}</p>
+      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+        {insightCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className='rounded-[24px] border border-white/[0.06] bg-[#111118] p-5'>
+              <div className='flex items-start justify-between gap-3'>
+                <div>
+                  <p className='text-[10px] font-black uppercase tracking-[0.28em] text-slate-500'>{item.label}</p>
+                  <p className='mt-4 text-2xl font-semibold text-white'>{item.value}</p>
+                </div>
+                <Icon className={`text-2xl ${item.color}`} />
               </div>
-              <item.icon className={`text-4xl ${item.color}`} />
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <div className='grid gap-6 xl:grid-cols-[1.2fr_0.8fr]'>
-        <div className='rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-glow backdrop-blur-xl'>
-          <h2 className='text-xl font-semibold text-white'>Weekly Focus Intensity</h2>
-          <p className='mt-2 text-slate-400'>Your output across the week, with focus peaks and deep work bursts.</p>
-          <div className='mt-6 h-[320px]'>
+      <div className='grid gap-6 xl:grid-cols-[1.1fr_0.9fr]'>
+        <section className='rounded-[32px] border border-white/[0.06] bg-[#111118] p-6'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <h2 className='text-lg font-semibold text-white'>Weekly focus rhythm</h2>
+              <p className='mt-1 text-sm text-slate-400'>A simple view of your focus sessions across the last week.</p>
+            </div>
+            <div className='rounded-full bg-purple-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-purple-300'>Last 7 days</div>
+          </div>
+          <div className='mt-6 h-[280px]'>
             <ResponsiveContainer width='100%' height='100%'>
-              <LineChart data={weeklyData}>
-                <CartesianGrid strokeDasharray='4 4' stroke='#ffffff15' />
-                <XAxis dataKey='day' stroke='#ffffff80' />
-                <YAxis stroke='#ffffff80' />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: 12 }} />
-                <Line type='monotone' dataKey='value' stroke='#8b5cf6' strokeWidth={3} dot={{ fill: '#8b5cf6' }} activeDot={{ r: 6 }} />
-              </LineChart>
+              <BarChart data={weeklyData}>
+                <CartesianGrid stroke='#ffffff12' vertical={false} />
+                <XAxis dataKey='day' stroke='#94a3b8' tickLine={false} axisLine={false} />
+                <YAxis stroke='#94a3b8' tickLine={false} axisLine={false} />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}
+                />
+                <Bar dataKey='value' fill='#8B5CF6' radius={[8, 8, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </section>
 
-        <div className='space-y-6'>
-          <div className='rounded-[32px] border border-white/10 bg-[#111118] p-6 shadow-glow backdrop-blur-xl'>
-            <h3 className='text-sm uppercase tracking-[0.25em] text-slate-500'>Category Breakdown</h3>
-            <div className='mt-6 space-y-4'>
-              {chartData.length > 0 ? chartData.map((item) => (
-                <div key={item.name} className='rounded-3xl bg-[#131318] p-4'>
-                  <div className='flex items-center justify-between gap-3'>
-                    <p className='text-sm text-slate-300'>{item.name}</p>
-                    <span className='text-white font-semibold'>{item.total} tasks</span>
-                  </div>
-                  <div className='mt-3 h-2 rounded-full bg-white/10'>
-                    <div className='h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500' style={{ width: `${(item.completed / item.total) * 100}%` }} />
-                  </div>
-                </div>
-              )) : (
-                <p className='text-slate-500'>Add tasks to see your category split.</p>
-              )}
+        <section className='rounded-[32px] border border-white/[0.06] bg-[#111118] p-6'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <h2 className='text-lg font-semibold text-white'>Completion snapshot</h2>
+              <p className='mt-1 text-sm text-slate-400'>Your current task completion balance.</p>
             </div>
+            <FaShieldAlt className='text-purple-300' />
           </div>
-
-          <div className='rounded-[32px] border border-white/10 bg-[#111118] p-6 shadow-glow backdrop-blur-xl'>
-            <div className='flex items-center justify-between gap-3'>
-              <p className='text-sm uppercase tracking-[0.25em] text-slate-500'>Completion Snapshot</p>
-              <FaShieldAlt className='text-violet-300' />
-            </div>
-            <div className='mt-6 text-3xl font-semibold text-white'>{completionStats.percentage}%</div>
-            <p className='mt-3 text-slate-400'>Your current completion ratio across all tracked tasks.</p>
+          <div className='mt-6 h-[220px]'>
+            <ResponsiveContainer width='100%' height='100%'>
+              <PieChart>
+                <Pie data={pieData} dataKey='value' innerRadius={60} outerRadius={84} paddingAngle={2}>
+                  <Cell fill='#8B5CF6' />
+                  <Cell fill='#C084FC' />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-        </div>
+          <div className='mt-2 flex items-center justify-center gap-6 text-sm text-slate-400'>
+            <span className='flex items-center gap-2'><span className='h-2.5 w-2.5 rounded-full bg-purple-500' /> Completed</span>
+            <span className='flex items-center gap-2'><span className='h-2.5 w-2.5 rounded-full bg-fuchsia-400' /> Pending</span>
+          </div>
+        </section>
       </div>
 
-      <div className='rounded-[32px] border border-white/10 bg-[#111118] p-6 shadow-glow backdrop-blur-xl'>
-        <h2 className='text-xl font-semibold text-white'>Productivity summary</h2>
-        <p className='mt-2 text-slate-400'>Combine your task results with focused time and session performance to plan the next work cycle.</p>
+      <div className='grid gap-6 lg:grid-cols-[1fr_0.9fr]'>
+        <section className='rounded-[32px] border border-white/[0.06] bg-[#111118] p-6'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <h2 className='text-lg font-semibold text-white'>Category breakdown</h2>
+              <p className='mt-1 text-sm text-slate-400'>See how your work is distributed across categories.</p>
+            </div>
+            <FaClock className='text-purple-300' />
+          </div>
+          <div className='mt-6 space-y-4'>
+            {chartData.length > 0 ? chartData.map((item) => (
+              <div key={item.name} className='rounded-[20px] border border-white/[0.05] bg-[#171723] p-4'>
+                <div className='flex items-center justify-between gap-3'>
+                  <p className='text-sm text-slate-300'>{item.name}</p>
+                  <span className='text-sm font-semibold text-white'>{item.total} tasks</span>
+                </div>
+                <div className='mt-3 h-2 rounded-full bg-white/10'>
+                  <div className='h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500' style={{ width: `${item.total === 0 ? 0 : Math.max(8, (item.completed / item.total) * 100)}%` }} />
+                </div>
+              </div>
+            )) : (
+              <p className='rounded-[20px] border border-dashed border-white/[0.08] p-4 text-sm text-slate-500'>Add tasks to see your category split.</p>
+            )}
+          </div>
+        </section>
+
+        <section className='rounded-[32px] border border-white/[0.06] bg-[#111118] p-6'>
+          <h2 className='text-lg font-semibold text-white'>Focus insights</h2>
+          <p className='mt-1 text-sm text-slate-400'>A short summary of what your current pattern suggests.</p>
+          <div className='mt-6 space-y-3'>
+            <div className='rounded-[20px] border border-white/[0.05] bg-[#171723] p-4 text-sm text-slate-300'>
+              <span className='font-semibold text-white'>Momentum:</span> your completion rate is {completionStats.percentage}% and the highest impact tasks are moving well.
+            </div>
+            <div className='rounded-[20px] border border-white/[0.05] bg-[#171723] p-4 text-sm text-slate-300'>
+              <span className='font-semibold text-white'>Sessions:</span> {pomodoroHistory.length} focus sessions tracked so far this week.
+            </div>
+            <div className='rounded-[20px] border border-white/[0.05] bg-[#171723] p-4 text-sm text-slate-300'>
+              <span className='font-semibold text-white'>Next step:</span> keep the streak going and use the same focus rhythm for your next deep work block.
+            </div>
+          </div>
+        </section>
       </div>
     </motion.div>
   );

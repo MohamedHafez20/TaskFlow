@@ -66,7 +66,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
       <motion.aside
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
-        className={`w-full max-w-[260px] bg-[#0b0b10] border-r border-white/[0.03] p-6 flex flex-col justify-between transition-all ${
+        className={`w-full max-w-[260px] border-r border-white/10 bg-[#090d18]/70 p-6 backdrop-blur-2xl flex flex-col justify-between transition-all ${
           isMobileMenuOpen
             ? 'fixed inset-y-0 left-0 z-50 shadow-2xl'
             : 'hidden md:flex'
@@ -130,7 +130,12 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
 
         {/* 👤 السفلي: كارد المستخدم النظيف وزر الخروج المدمج من الديزاين الجديد */}
         <div className="border-t border-white/[0.04] pt-4 px-2 flex items-center justify-between flex-shrink-0 mt-4">
-          <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleMenuClick('/app/user-profile')}
+            className="flex items-center gap-3 flex-1 min-w-0 rounded-xl p-2 -m-2 hover:bg-white/[0.03] transition-all text-left"
+            title="Open profile"
+          >
             <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-purple-600 to-fuchsia-600 flex items-center justify-center text-xs font-black text-white uppercase shadow-md shadow-purple-500/10">
               {userName.substring(0, 2)}
             </div>
@@ -138,7 +143,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
               <p className="text-xs font-bold text-white tracking-wide truncate">{userName}</p>
               <p className="text-[10px] font-medium text-slate-500">Free Tier</p>
             </div>
-          </div>
+          </button>
 
           <button
             onClick={handleLogout}

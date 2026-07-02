@@ -75,4 +75,4 @@ const updateMe = asyncHandler(async (req, res) => {
   res.json(user);
 });
 
-module.exports = { register, login, getMe, updateMe };
+module.exports = { register, login, getMe, updateMe };

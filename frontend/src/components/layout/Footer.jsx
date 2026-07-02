@@ -2,7 +2,7 @@ import { FaInstagram, FaWhatsapp, FaLinkedin } from 'react-icons/fa';
 
 function Footer() {
   return (
-    <footer className='border-t border-white/10 bg-[#09090f] text-slate-400'>
+    <footer className='border-t border-white/10 bg-[#090d18]/70 text-slate-400 backdrop-blur-2xl'>
       <div className='mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 md:px-6 lg:px-8 lg:flex-row lg:items-center lg:justify-between'>
         <div className='space-y-3'>
           <p className='text-sm uppercase tracking-[0.3em] text-slate-500'>Midnight Focus</p>

@@ -2,6 +2,7 @@ import { Navigate, RouterProvider } from "react-router-dom";
 import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Loader from "../components/Ui/Loader";
+import Profile from "../pages/Profile";
 
 // Lazy load the components
 const NotFound = lazy(() => import("../pages/NotFound"));
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
       {
         path: "dashboard",
         element: <Dashboard />
+      },
+      {
+         path : "user-profile",
+         element : <Profile /> 
       },
       {
         path: "games",

@@ -49,6 +49,7 @@ const analyzeTask = (title) => {
 
 const useTaskStore = create((set, get) => ({
   tasks: [],
+  globalSearch: '',
   pomodoroHistory: [],
   gamificationStats: null,
   loading: false,
@@ -237,6 +238,8 @@ const useTaskStore = create((set, get) => ({
   },
 
   reorderTasks: (newOrder) => set({ tasks: newOrder }),
+
+  setGlobalSearch: (value) => set({ globalSearch: value }),
 
   // Selectors / Helpers (Preserved from original code)
   getCompletionStats: () => {

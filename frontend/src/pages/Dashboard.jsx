@@ -12,6 +12,7 @@ import usePageTitle from '../hooks/usePageTitle';
 
 function Dashboard() {
   const tasks = useTaskStore((s) => s.tasks);
+  const globalSearch = useTaskStore((s) => s.globalSearch);
   const addTask = useTaskStore((s) => s.addTask);
   const updateTask = useTaskStore((s) => s.updateTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
@@ -133,12 +134,19 @@ function Dashboard() {
   const filteredTasksByTime = useMemo(() => {
     const todayStr = new Date().toDateString();
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const query = globalSearch.trim().toLowerCase();
+
     return tasks.filter((task) => {
-      if (timeRange === 'Today') return new Date(task.createdAt).toDateString() === todayStr;
-      if (timeRange === 'This Week') return new Date(task.createdAt) >= oneWeekAgo;
-      return true;
+      const matchesSearch = !query || task.title?.toLowerCase().includes(query);
+      const matchesTime = (() => {
+        if (timeRange === 'Today') return new Date(task.createdAt).toDateString() === todayStr;
+        if (timeRange === 'This Week') return new Date(task.createdAt) >= oneWeekAgo;
+        return true;
+      })();
+
+      return matchesSearch && matchesTime;
     });
-  }, [tasks, timeRange]);
+  }, [tasks, timeRange, globalSearch]);
 
   // حساب ساعات التركيز بناءً على جلسات بومودورو المكتملة
   const focusMetrics = useMemo(() => {

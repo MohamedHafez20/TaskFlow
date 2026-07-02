@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useTaskStore from '../../store/useTaskStore';
 import useUserStore from '../../store/useUserStore';
 import { 
@@ -13,9 +14,14 @@ import {
 } from 'react-icons/fa';
 
 function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const userName = useUserStore((s) => s.userName);
   const tasks = useTaskStore((s) => s.tasks);
+  const setGlobalSearch = useTaskStore((s) => s.setGlobalSearch);
+  const globalSearch = useTaskStore((s) => s.globalSearch);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   
   // 🔔 الـ State السحرية للتحكم في وضع الجرس (شغال / صامت)
   const [isNotificationsMuted, setIsNotificationsMuted] = useState(false);
@@ -25,8 +31,34 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const total = tasks.length;
   const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
 
+  const handleProfileClick = () => navigate('/app/user-profile');
+
+  const searchResults = useMemo(() => {
+    const query = globalSearch.trim().toLowerCase();
+    if (!query) return [];
+
+    return tasks
+      .filter((task) => task.title?.toLowerCase().includes(query))
+      .slice(0, 5)
+      .map((task) => ({
+        id: task.id || task._id,
+        title: task.title,
+        completed: task.completed,
+      }));
+  }, [tasks, globalSearch]);
+
+  const showSearchMenu = isSearchFocused && globalSearch.trim().length > 0;
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setGlobalSearch(value);
+    if (location.pathname !== '/app/dashboard') {
+      navigate('/app/dashboard');
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-40 bg-[#0c0c12]/80 backdrop-blur-md border-b border-white/[0.04] px-4 py-4 md:px-8">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#090d18]/70 px-4 py-4 backdrop-blur-2xl md:px-8">
       <div className="mx-auto flex items-center justify-between gap-4">
         
         {/* 1. الناحية الشمال: اسمك واللقب */}
@@ -40,7 +72,18 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
           </button>
 
           <div className="flex flex-col">
-            <h1 className="text-base font-bold text-white tracking-wide">
+            <h1
+              className="text-base font-bold text-white tracking-wide cursor-pointer hover:text-purple-300 transition-colors"
+              onClick={handleProfileClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleProfileClick();
+                }
+              }}
+            >
               {userName || 'Kamal Abou Eid'}
             </h1>
             <span className="text-[10px] font-semibold text-purple-400 tracking-wider mt-0.5">
@@ -50,13 +93,42 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         </div>
 
         {/* 2. المنتصف: شريط البحث */}
-        <div className="hidden md:block flex-1 max-w-md relative mx-8">
-          <FaSearch className="pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+        <div className="relative mx-2 flex-1 max-w-md md:mx-8">
+          <div className={`pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${globalSearch.trim() ? 'text-purple-400' : 'text-slate-500'}`}>
+            <FaSearch className="h-full w-full" />
+          </div>
           <input
             type="search"
-            placeholder="Search tasks, analytics, or shortcuts..."
-            className="w-full rounded-full bg-white/[0.03] border border-white/[0.06] py-2.5 pl-11 pr-4 text-xs text-slate-300 outline-none transition placeholder:text-slate-600 focus:border-purple-500/50 focus:bg-white/[0.05] focus:ring-0"
+            value={globalSearch}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
+            onChange={handleSearchChange}
+            placeholder="Search tasks by title..."
+            className="w-full rounded-full border border-white/[0.06] bg-white/[0.03] py-2.5 pl-11 pr-4 text-xs text-slate-300 outline-none transition placeholder:text-slate-600 focus:border-purple-500/50 focus:bg-white/[0.05] focus:ring-0"
           />
+
+          {showSearchMenu && (
+            <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] rounded-2xl border border-white/[0.06] bg-[#0f1322]/95 p-2 shadow-2xl backdrop-blur-xl">
+              {searchResults.length > 0 ? (
+                searchResults.map((result) => (
+                  <button
+                    key={result.id}
+                    type="button"
+                    onClick={() => {
+                      setGlobalSearch(result.title);
+                      navigate('/app/dashboard');
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/[0.05]"
+                  >
+                    <span className="truncate">{result.title}</span>
+                    {result.completed ? <span className="text-[10px] uppercase text-slate-500">Done</span> : <span className="text-[10px] uppercase text-purple-400">Task</span>}
+                  </button>
+                ))
+              ) : (
+                <div className="rounded-xl px-3 py-2 text-sm text-slate-500">No matching tasks found.</div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 3. الناحية اليمين: الأزرار والتفاعل */}
@@ -95,9 +167,15 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
           <div className="h-6 w-[1px] bg-white/[0.08] hidden sm:block" />
 
           {/* الأفاتار */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border border-purple-500/20 text-purple-400">
+          <button
+            type="button"
+            onClick={handleProfileClick}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 transition-colors"
+            aria-label="Open profile"
+            title="Open profile"
+          >
             <FaUserCircle className="h-5 w-5" />
-          </div>
+          </button>
 
         </div>
       </div>
