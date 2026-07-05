@@ -52,6 +52,11 @@ const useTaskStore = create((set, get) => ({
   globalSearch: '',
   pomodoroHistory: [],
   gamificationStats: null,
+  isDeepSession: sessionStorage.getItem('pomodoroIsDeepSession') === 'true',
+  setIsDeepSession: (val) => {
+    sessionStorage.setItem('pomodoroIsDeepSession', val);
+    set({ isDeepSession: val });
+  },
   loading: false,
   pomodoroLoading: false,
   error: null,

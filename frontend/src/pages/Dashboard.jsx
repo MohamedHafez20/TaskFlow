@@ -6,13 +6,23 @@ import {
   FaTrophy, FaChartLine, FaChartBar, FaClock, FaStop
 } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 import useTaskStore from '../store/useTaskStore';
 import useUserStore from '../store/useUserStore';
 import usePageTitle from '../hooks/usePageTitle';
+import { XP_PER_LEVEL, getLevelLabel, getLevelProgress } from '../constants/gamification';
+
+const formatHours = (minutes) => {
+  if (!minutes || minutes <= 0) return '0.0h';
+  const hours = minutes / 60;
+  return `${hours.toFixed(1)}h`;
+};
 
 function Dashboard() {
   const tasks = useTaskStore((s) => s.tasks);
   const globalSearch = useTaskStore((s) => s.globalSearch);
+  const gamificationStats = useTaskStore((s) => s.gamificationStats);
+  const isDeepSession = useTaskStore((s) => s.isDeepSession);
   const addTask = useTaskStore((s) => s.addTask);
   const updateTask = useTaskStore((s) => s.updateTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
@@ -34,7 +44,12 @@ function Dashboard() {
   const [isTimerRunning, setIsTimerRunning] = useState(false); // حالة التشغيل
   const [customMinutes, setCustomMinutes] = useState('25'); // الإدخال اليدوي للدقائق
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 3;
+
   usePageTitle('Dashboard');
+  const navigate = useNavigate();
 
   // عدّاد الثواني (Pomodoro Engine)
   useEffect(() => {
@@ -92,22 +107,56 @@ function Dashboard() {
     const total = tasks.length;
     const completedTasks = tasks.filter((t) => t.completed);
     const completedCount = completedTasks.length;
+    const completedRatio = total === 0 ? 0 : completedCount / total;
     
-    const totalEarnedXp = completedCount * 500; 
-    const currentLevel = 1 + Math.floor(totalEarnedXp / 1000);
-    const xpInCurrentLevel = totalEarnedXp % 1000;
-    const xpProgressPercentage = (xpInCurrentLevel / 1000) * 100;
+    const totalEarnedXp = completedCount * 500;
+    const streakDays = gamificationStats?.currentStreak ?? 0;
+    const levelProgress = getLevelProgress(totalEarnedXp);
+    const currentLevel = gamificationStats?.level ?? levelProgress.level;
+    const xpInCurrentLevel = gamificationStats?.xpInCurrentLevel ?? levelProgress.xpInLevel;
+    const xpProgressPercentage = total === 0 ? 0 : (xpInCurrentLevel / XP_PER_LEVEL) * 100;
+    const rankLabel = gamificationStats?.levelName ?? getLevelLabel(currentLevel);
+    // Weekly streak: count consecutive days (up to 7) where the user created at least one task.
+    const weeklyStreak = (() => {
+      if (!tasks || tasks.length === 0) return 0;
+      const today = new Date();
+      const toYMD = (d) => new Date(d).toISOString().slice(0, 10); // YYYY-MM-DD
+      const sevenDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000); // include today (7 days)
+
+      // collect unique days where user created any task (activity day)
+      const activityDays = new Set();
+      tasks.forEach((t) => {
+        if (!t.createdAt) return;
+        const d = new Date(t.createdAt);
+        if (d >= sevenDaysAgo && d <= today) activityDays.add(toYMD(d));
+      });
+
+      // count consecutive days ending today
+      let streak = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        if (activityDays.has(toYMD(d))) streak += 1;
+        else break;
+      }
+      return streak;
+    })();
+    const globalTopPercentage = total === 0 ? 0 : Math.max(1, Math.min(98, 100 - Math.round(completedRatio * 100)));
 
     return {
       total,
       completedCount,
-      percentage: total === 0 ? 0 : Math.round((completedCount / total) * 100),
+      percentage: Math.round(completedRatio * 100),
       currentLevel,
       xpInCurrentLevel,
       xpProgressPercentage,
-      totalEarnedXp
+      totalEarnedXp,
+      rankLabel,
+      weeklyStreak,
+      globalTopPercentage,
+      streakDays,
     };
-  }, [tasks]);
+  }, [tasks, gamificationStats]);
 
   // حساب بيانات الـ Focus Intensity للأيام الحقيقية
   const dynamicBarData = useMemo(() => {
@@ -218,6 +267,19 @@ function Dashboard() {
   const dataPie = [{ value: 92 }, { value: 8 }];
   const currentDayName = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date().getDay()];
 
+  // Pagination for Active Flow Tasks
+  const totalPages = Math.max(1, Math.ceil(filteredTasksByTime.length / tasksPerPage));
+  const paginatedTasks = useMemo(() => {
+    const start = (currentPage - 1) * tasksPerPage;
+    return filteredTasksByTime.slice(start, start + tasksPerPage);
+  }, [filteredTasksByTime, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 p-2 text-slate-300 antialiased font-sans">
       
@@ -226,21 +288,20 @@ function Dashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
-            <p className="mt-1 text-sm text-slate-400">Welcome back, {userName || 'Kamal'}. Your deep work streak is at 12 days.</p>
-          </div>
-          
+              <p className="mt-1 text-sm text-slate-400">Welcome back, {userName || 'Kamal'}. Your deep work streak is at {userStats.streakDays} days.</p>
+            </div>
           <div className="flex items-center gap-3 relative self-start sm:self-center">
             <div className="relative">
               <button 
                 onClick={() => setShowTimeDropdown(!showTimeDropdown)} 
-                className="inline-flex items-center gap-2 rounded-xl bg-[#161622] px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition border border-white/[0.05]"
+                className="inline-flex items-center gap-2 rounded-xl bg-white/5 backdrop-blur-md px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition border border-white/10"
               >
                 <FaCalendarAlt className="text-slate-400" />
                 {timeRange}
               </button>
               
               {showTimeDropdown && (
-                <div className="absolute right-0 mt-2 bg-[#161622] border border-white/10 rounded-xl py-1 w-32 shadow-xl z-50 text-xs">
+                <div className="absolute right-0 mt-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl py-1 w-32 shadow-xl z-50 text-xs">
                   {['Today', 'This Week', 'All Time'].map((option) => (
                     <button 
                       key={option}
@@ -259,20 +320,20 @@ function Dashboard() {
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-fuchsia-500/10 transition hover:opacity-90"
             >
               <FaPlus />
-              New Widget
+              New Task
             </button>
           </div>
         </div>
 
         {/* كروت المستوى والـ AI */}
         <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
-          <div className="relative overflow-hidden rounded-3xl bg-[#13131a] p-6 border border-white/[0.04]">
+          <div className="relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/10">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Current Standing</p>
                 <div className="mt-4 flex items-baseline gap-2">
                   <span className="text-5xl font-black tracking-tight text-white">Level {userStats.currentLevel}</span>
-                  <span className="text-sm font-semibold text-purple-400">+{userStats.totalEarnedXp || '1,240'} XP</span>
+                  <span className="text-sm font-semibold text-purple-400">+{userStats.totalEarnedXp} XP</span>
                 </div>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.03] border border-white/[0.08] text-purple-400">
@@ -286,24 +347,24 @@ function Dashboard() {
                 <span className="text-slate-300">{userStats.xpInCurrentLevel} / 1,000 XP</span>
               </div>
               <div className="mt-2.5 h-2 w-full rounded-full bg-white/[0.06]">
-                <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" style={{ width: `${userStats.xpProgressPercentage || 87}%` }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" style={{ width: `${userStats.xpProgressPercentage}%` }} />
               </div>
             </div>
 
             <div className="mt-8 grid grid-cols-3 gap-4 border-t border-white/[0.04] pt-5">
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Rank</p><p className="mt-1 text-lg font-bold text-white">Archon</p></div>
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Weekly Streak</p><p className="mt-1 text-lg font-bold text-white">12 Days</p></div>
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Global Top</p><p className="mt-1 text-lg font-bold text-purple-400">2.4%</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Rank</p><p className="mt-1 text-lg font-bold text-white">{userStats.rankLabel}</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Weekly Streak</p><p className="mt-1 text-lg font-bold text-white">{userStats.streakDays} Days</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Global Top</p><p className="mt-1 text-lg font-bold text-purple-400">{userStats.globalTopPercentage}%</p></div>
             </div>
           </div>
 
-          <div className="flex flex-col justify-between rounded-3xl bg-[#13131a] p-6 text-center border border-white/[0.04]">
+          <div className="flex flex-col justify-between rounded-3xl bg-white/5 backdrop-blur-xl p-6 text-center border border-white/10">
             <div className="flex flex-col items-center pt-2">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-950/40 border border-purple-500/20 text-purple-400"><FaRobot className="text-2xl" /></div>
-              <h3 className="text-lg font-bold text-white tracking-wide">Focus with AI-Robo Advisor!</h3>
+              <h3 className="text-lg font-bold text-white tracking-wide">Task Flow AI</h3>
               <p className="mt-2 px-4 text-xs leading-relaxed text-slate-400">Get automated schedule management, real-time insights, and personalized work advice.</p>
             </div>
-            <button className="mt-6 w-full rounded-xl bg-white/[0.04] border border-white/[0.08] py-2.5 text-xs font-semibold text-white transition hover:bg-white/[0.08]">Try Now</button>
+            <button onClick={() => navigate('/app/chatbot')} className="mt-6 w-full rounded-xl bg-white/[0.04] border border-white/[0.08] py-2.5 text-xs font-semibold text-white transition hover:bg-white/[0.08]">Try Now</button>
           </div>
         </div>
       </div>
@@ -312,7 +373,7 @@ function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         
         {/* 1. كارت HOURS FOCUSED */}
-        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex flex-col justify-between h-[170px]">
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex flex-col justify-between h-[170px]">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Hours Focused</p>
             <span className="text-[10px] bg-white/5 border border-white/10 text-purple-400 rounded-md px-1.5 py-0.5 inline-flex items-center gap-1">
@@ -320,7 +381,7 @@ function Dashboard() {
             </span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-4xl font-bold text-white tracking-tight">{focusMetrics.hoursThisWeek ? focusMetrics.hoursThisWeek.toFixed(1) + 'h' : '0.0h'}</span>
+            <span className="text-4xl font-bold text-white tracking-tight">{formatHours((gamificationStats?.focusMinutes || 0))}</span>
             <span className="text-xs text-slate-500">this week</span>
           </div>
           <div className="h-10 w-full mt-2 opacity-50">
@@ -333,34 +394,45 @@ function Dashboard() {
         </div>
 
         {/* 2. كارت DEEP SESSIONS */}
-        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex flex-col justify-between h-[170px]">
+        <div 
+          onClick={() => navigate('/app/pomodoro', { state: { openDeepSession: true } })}
+          className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex flex-col justify-between h-[170px] cursor-pointer hover:border-purple-500/30 transition-all duration-300 hover:bg-white/[0.07] group"
+        >
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Deep Sessions</p>
-            <FaEllipsisH className="text-xs text-slate-500 cursor-pointer" />
+            <FaChevronRight className="text-xs text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all duration-300" />
           </div>
           <div className="my-auto">
             <div className="flex items-baseline gap-1.5">
               <span className="text-4xl font-bold text-white tracking-tight">
-                {userStats.completedCount || '12'}
+                {gamificationStats?.deepSessions ?? 0}
               </span>
-              <span className="text-sm font-semibold text-slate-500">
-                /{userStats.total || '15'} goal
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">
+                sessions
               </span>
             </div>
           </div>
           <div className="w-full">
             <div className="h-1.5 w-full rounded-full bg-white/[0.06]">
-              <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" style={{ width: `${userStats.percentage || 80}%` }} />
+              <div 
+                className={`h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 transition-all duration-500 ${isDeepSession ? 'animate-pulse' : ''}`} 
+                style={{ width: isDeepSession ? '100%' : '0%' }} 
+              />
             </div>
-            <div className="flex justify-between text-[9px] text-slate-500 mt-2 font-medium">
-              <span>Daily Target</span>
-              <span className="text-slate-400 font-bold">{userStats.percentage || 80}% complete</span>
+            <div className="flex justify-between items-center text-[9px] text-slate-500 mt-2 font-medium">
+              <span className="flex items-center gap-1.5">
+                <span className={`h-1.5 w-1.5 rounded-full ${isDeepSession ? 'bg-purple-400 animate-ping' : 'bg-slate-600'}`} />
+                Deep Session Mode
+              </span>
+              <span className={`${isDeepSession ? 'text-purple-400 font-bold' : 'text-slate-500 font-bold'}`}>
+                {isDeepSession ? 'ACTIVE' : 'INACTIVE'}
+              </span>
             </div>
           </div>
         </div>
 
         {/* 3. كارت FLOW EFFICIENCY */}
-        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex items-center justify-between h-[170px]">
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex items-center justify-between h-[170px]">
           <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -384,12 +456,13 @@ function Dashboard() {
         </div>
 
       </div>
+      
 
       {/* القسم السفلي: المهمات مع الـ Dropdown الرهيب للتايمر */}
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr] items-start">
         
         {/* قائمة المهمات النشطة */}
-        <div className="rounded-3xl bg-[#13131a]/60 p-6 border border-white/[0.04]">
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/10">
           <div className="flex items-center justify-between border-b border-white/[0.04] pb-4">
             <h2 className="text-base font-bold text-white tracking-wide">Active Flow Tasks</h2>
             <button className="text-xs font-semibold text-purple-400 hover:underline flex items-center gap-1">
@@ -398,15 +471,15 @@ function Dashboard() {
           </div>
 
           <div className="mt-4 space-y-3">
-            {filteredTasksByTime.map((task) => {
+            {paginatedTasks.map((task) => {
               const isCurrentTimer = activeTimerTaskId === task.id;
               const isExpanded = expandedTaskId === task.id;
               
               return (
-                <div key={task.id} className="flex flex-col rounded-2xl bg-[#161622]/40 border border-white/[0.02] overflow-hidden transition-all">
+                <div key={task.id} className="flex flex-col rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden transition-all">
                   
                   {/* السطر الأساسي للتاسك */}
-                  <div className={`flex items-center justify-between p-4 ${task.completed ? 'opacity-40' : ''}`}>
+                  <div className={`flex items-center justify-between p-3 ${task.completed ? 'opacity-40' : ''}`}>
                     <div className="flex items-start gap-4 flex-1">
                       <input 
                         type="checkbox" 
@@ -454,7 +527,7 @@ function Dashboard() {
                         initial={{ height: 0, opacity: 0 }} 
                         animate={{ height: 'auto', opacity: 1 }} 
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-black/20 border-t border-white/[0.03] px-4 py-3 space-y-3"
+                        className="bg-black/20 border-t border-white/[0.03] px-4 py-2.5 space-y-2.5"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           {/* أزرار الأرقام الثابتة */}
@@ -530,10 +603,35 @@ function Dashboard() {
               );
             })}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between border-t border-white/[0.04] pt-4">
+              <div className="text-xs font-semibold text-slate-400">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-white/[0.05] bg-white/[0.02] text-slate-300 hover:bg-white/[0.05] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  ← Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-white/[0.05] bg-white/[0.02] text-slate-300 hover:bg-white/[0.05] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* كارد FOCUS INTENSITY */}
-        <div className="rounded-3xl bg-[#13131a] p-6 border border-white/[0.04] flex flex-col justify-between">
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/10 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Focus Intensity</h3>
@@ -591,13 +689,13 @@ function Dashboard() {
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#111118] border border-white/10 p-6 rounded-3xl w-full max-w-sm shadow-2xl relative">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl w-full max-w-xl shadow-2xl relative">
               <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition"><FaTimes /></button>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-2 w-2 rounded-full bg-purple-500 animate-ping" />
-                <h3 className="text-base font-bold text-white">{isEditing ? 'Modify Active Task' : 'Launch New Flow Task'}</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-2.5 w-2.5 rounded-full bg-purple-500 animate-pulse" />
+                <h3 className="text-lg font-bold text-white">{isEditing ? 'Modify Active Task' : 'Launch New Task'}</h3>
               </div>
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Task Name</label>
                   <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="What are you focusing on?" className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-purple-500/50 focus:bg-white/[0.05] transition placeholder:text-slate-600" />
@@ -605,12 +703,12 @@ function Dashboard() {
                 <div>
                   <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Set Priority Level</label>
                   <div className="relative">
-                    <select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="w-full bg-[#161622] border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-purple-500/50 appearance-none cursor-pointer tracking-wide font-medium">
+                    <select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10 appearance-none cursor-pointer tracking-wide font-semibold">
                       <option value="low" className="bg-[#13131a] text-blue-400">Low Urgency</option>
                       <option value="medium" className="bg-[#13131a] text-purple-400">Medium Focus</option>
                       <option value="high" className="bg-[#13131a] text-orange-400">High Priority</option>
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 text-[10px]">▼</div>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 text-[10px]">▼</div>
                   </div>
                 </div>
                 <button type="submit" className="w-full mt-2 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 py-3 text-xs font-bold text-white shadow-lg shadow-purple-500/20 transition hover:opacity-95 tracking-wide">

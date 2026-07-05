@@ -13,7 +13,7 @@ function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b10] text-slate-300 p-8 select-none antialiased font-sans">
+    <div className="bg-transparent text-slate-300 p-8 select-none antialiased font-sans">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-black text-white tracking-wide mb-1">Profile & Settings</h1>
         <p className="text-xs text-slate-500 mb-8 uppercase tracking-widest">Manage your account preferences and productivity tools.</p>

@@ -1186,7 +1186,7 @@ function GamesPage() {
   const categories = ['all', ...new Set(games.map(game => game.category.toLowerCase()))];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+    <div className="bg-transparent p-4">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

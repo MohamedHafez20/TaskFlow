@@ -1,15 +1,24 @@
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import useTaskStore from '../store/useTaskStore';
 import { FaTrophy, FaStar, FaMedal, FaAward, FaCheckCircle, FaFire } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
+import { getLevelLabel } from '../constants/gamification';
 
 function ProductivityLevel() {
   usePageTitle('Productivity Level');
 
   const tasks = useTaskStore((s) => s.tasks);
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 5;
 
   const completedTasks = useMemo(() => tasks.filter((t) => t.completed), [tasks]);
+
+  const totalPages = Math.max(1, Math.ceil(completedTasks.length / tasksPerPage));
+  const paginatedCompletedTasks = useMemo(() => {
+    const start = (currentPage - 1) * tasksPerPage;
+    return completedTasks.slice(start, start + tasksPerPage);
+  }, [completedTasks, currentPage]);
 
   const productivityStats = useMemo(() => {
     const total = tasks.length;
@@ -27,24 +36,21 @@ function ProductivityLevel() {
 
     const productivityScore = Math.min(100, baseScore + highPriorityBonus + recentBonus);
 
-    let level = 'Starter';
+    const levelNumber = Math.max(1, Math.min(7, Math.ceil(productivityScore / 14)));
+    const level = getLevelLabel(levelNumber);
     let levelColor = 'text-slate-400';
     let levelIcon = FaStar;
 
-    if (productivityScore >= 90) {
-      level = 'Master';
+    if (levelNumber >= 6) {
       levelColor = 'text-yellow-400';
       levelIcon = FaTrophy;
-    } else if (productivityScore >= 75) {
-      level = 'Expert';
+    } else if (levelNumber >= 5) {
       levelColor = 'text-purple-400';
       levelIcon = FaAward;
-    } else if (productivityScore >= 60) {
-      level = 'Pro';
+    } else if (levelNumber >= 4) {
       levelColor = 'text-blue-400';
       levelIcon = FaMedal;
-    } else if (productivityScore >= 40) {
-      level = 'Good';
+    } else if (levelNumber >= 3) {
       levelColor = 'text-fuchsia-400';
       levelIcon = FaFire;
     }
@@ -79,20 +85,20 @@ function ProductivityLevel() {
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
           <LevelIcon className={`text-4xl ${productivityStats.levelColor}`} />
-          Productivity Level
+          Level & Rank
         </h1>
-        <p className="text-slate-500">Track your productivity journey and achievements</p>
+        <p className="text-slate-500">See your current level and rank in the system.</p>
       </div>
 
       {/* Main Level Card */}
-      <div className="rounded-3xl bg-[#13131a] p-8 border border-white/[0.04] text-center">
+      <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-8 border border-white/10 text-center">
         <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 mb-6">
           <LevelIcon className="text-4xl text-white" />
         </div>
         <h2 className={`text-4xl font-bold mb-2 ${productivityStats.levelColor}`}>
           {productivityStats.level}
         </h2>
-        <p className="text-slate-400 mb-6 text-base">Productivity Score</p>
+        <p className="text-slate-400 mb-6 text-base">Current Rank</p>
 
         {/* Score Display */}
         <div className="flex items-baseline justify-center gap-2 mb-8">
@@ -111,7 +117,7 @@ function ProductivityLevel() {
             />
           </div>
           <div className="flex justify-between text-[10px] text-slate-500 mt-3 font-medium">
-            <span>Progress</span>
+            <span>System Score</span>
             <span>{productivityStats.productivityScore}%</span>
           </div>
         </div>
@@ -120,7 +126,7 @@ function ProductivityLevel() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Total Tasks */}
-        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex flex-col justify-between h-[170px]">
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex flex-col justify-between h-[170px]">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Tasks</p>
             <FaCheckCircle className="text-xl text-blue-400 opacity-60" />
@@ -135,7 +141,7 @@ function ProductivityLevel() {
         </div>
 
         {/* Completed Tasks */}
-        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex flex-col justify-between h-[170px]">
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex flex-col justify-between h-[170px]">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Completed</p>
             <FaTrophy className="text-xl text-green-400 opacity-60" />
@@ -151,7 +157,7 @@ function ProductivityLevel() {
         </div>
 
         {/* High Priority */}
-        <div className="rounded-3xl bg-[#13131a] p-5 border border-white/[0.04] flex flex-col justify-between h-[170px]">
+        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex flex-col justify-between h-[170px]">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">High Priority</p>
             <FaFire className="text-xl text-orange-400 opacity-60" />
@@ -215,32 +221,65 @@ function ProductivityLevel() {
       </div>
 
       {/* Completed Tasks List */}
-      <div>
-        <h2 className="text-lg font-bold text-white mb-4">Your Completed Tasks</h2>
-        {completedTasks.length > 0 ? (
-          <div className="space-y-3">
-            {completedTasks.slice(0, 10).map((task) => (
-              <div key={task.id} className="rounded-2xl bg-[#13131a] p-4 border border-white/[0.04]">
-                <div className="flex items-start gap-3">
-                  <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm line-through text-slate-400">{task.title}</p>
-                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-medium">{task.priority} Priority</p>
+      <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/10">
+        <div className="flex items-center justify-between border-b border-white/[0.04] pb-4">
+          <h2 className="text-base font-bold text-white tracking-wide">Your Completed Tasks</h2>
+          <button className="text-xs font-semibold text-purple-400 hover:underline flex items-center gap-1">
+            {completedTasks.length} completed
+          </button>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {completedTasks.length > 0 ? (
+            paginatedCompletedTasks.map((task) => (
+              <div key={task.id} className="flex flex-col rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden transition-all">
+                <div className="flex items-center justify-between p-4 opacity-60">
+                  <div className="flex items-start gap-4 flex-1">
+                    <FaCheckCircle className="text-green-400 mt-1 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium line-through text-slate-400">{task.title}</p>
+                      <div className="mt-2 flex items-center gap-3">
+                        <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${task.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : task.priority === 'medium' ? 'bg-blue-500/10 text-blue-400' : 'bg-green-500/10 text-green-400'}`}>
+                          {task.priority || 'medium'} Priority
+                        </span>
+                        {task.completedAt && <span className="text-[10px] text-slate-500">Completed: {new Date(task.completedAt).toLocaleDateString()}</span>}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            ))}
-            {completedTasks.length > 10 && (
-              <p className="text-center text-slate-500 text-sm mt-4">
-                And {completedTasks.length - 10} more completed tasks...
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="rounded-3xl bg-[#13131a] p-12 border border-white/[0.04] text-center">
-            <FaCheckCircle className="text-6xl text-slate-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-400 mb-2">No completed tasks yet</h3>
-            <p className="text-slate-500 text-sm">Start completing tasks to see your productivity level grow!</p>
+            ))
+          ) : (
+            <div className="rounded-[20px] border border-dashed border-white/[0.08] p-10 text-center text-sm text-slate-500">
+              <FaCheckCircle className="text-4xl text-slate-600 mx-auto mb-3 opacity-50" />
+              <p className="font-semibold">No completed tasks yet</p>
+              <p className="text-xs mt-1">Start completing tasks to see them here</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between border-t border-white/[0.04] pt-4">
+            <div className="text-xs font-semibold text-slate-400">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-white/[0.05] bg-white/[0.02] text-slate-300 hover:bg-white/[0.05] disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                ← Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-white/[0.05] bg-white/[0.02] text-slate-300 hover:bg-white/[0.05] disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
       </div>

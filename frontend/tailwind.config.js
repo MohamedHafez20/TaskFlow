@@ -18,8 +18,12 @@ export default {
           600: '#8b5cf6',
           500: '#a855f7',
         },
-        accent: '#A855F7',
+        accent: '#06f4e1',
+        accentPrimary: '#A855F7',
         glow: '#d8b4fe',
+        cyan: {
+          400: '#06f4e1',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'Poppins', 'system-ui', 'sans-serif'],
@@ -30,11 +34,23 @@ export default {
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'float-slow': 'float 8s ease-in-out infinite',
+        'blob': 'blob 7s infinite',
       },
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-10px)' },
+        },
+        blob: {
+          '0%, 100%': {
+            transform: 'translate(0, 0) scale(1)',
+          },
+          '33%': {
+            transform: 'translate(30px, -50px) scale(1.1)',
+          },
+          '66%': {
+            transform: 'translate(-20px, 20px) scale(0.9)',
+          },
         },
       },
     },

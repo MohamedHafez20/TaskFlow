@@ -1,5 +1,6 @@
 const Task = require('../models/Task');
 const asyncHandler = require('../middleware/asyncHandler');
+const { awardTaskCompletion } = require('../utils/gamification');
 
 const normalizeTaskBody = (body) => {
   const updates = {};
@@ -62,6 +63,10 @@ const updateTask = asyncHandler(async (req, res) => {
     new: true,
     runValidators: true,
   });
+
+  if (updated.status === 'done' && task.status !== 'done') {
+    await awardTaskCompletion(req.user._id);
+  }
 
   res.json(updated);
 });

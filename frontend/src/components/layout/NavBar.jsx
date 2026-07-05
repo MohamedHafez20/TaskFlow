@@ -22,8 +22,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const globalSearch = useTaskStore((s) => s.globalSearch);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  
-  // 🔔 الـ State السحرية للتحكم في وضع الجرس (شغال / صامت)
+
   const [isNotificationsMuted, setIsNotificationsMuted] = useState(false);
 
   // حساب الـ Completion Rate ديناميك
@@ -58,7 +57,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#090d18]/70 px-4 py-4 backdrop-blur-2xl md:px-8">
+    <header className="sticky top-0 z-40   px-4 py-4 backdrop-blur-2xl md:px-8">
       <div className="mx-auto flex items-center justify-between gap-4">
         
         {/* 1. الناحية الشمال: اسمك واللقب */}

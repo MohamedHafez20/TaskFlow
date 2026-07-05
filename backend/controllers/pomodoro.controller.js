@@ -1,6 +1,7 @@
 const PomodoroSession = require('../models/PomodoroSession');
 const User = require('../models/User');
 const asyncHandler = require('../middleware/asyncHandler');
+const { awardFocusSession } = require('../utils/gamification');
 
 const normalizeMode = (mode) => {
   if (!mode || mode === 'work') return 'focus';
@@ -10,7 +11,7 @@ const normalizeMode = (mode) => {
 };
 
 const startSession = asyncHandler(async (req, res) => {
-  const { mode, duration } = req.body;
+  const { mode, duration, isDeepSession } = req.body;
 
   if (!duration) {
     res.status(400);
@@ -21,6 +22,7 @@ const startSession = asyncHandler(async (req, res) => {
     user: req.user._id,
     mode: normalizeMode(mode),
     duration,
+    isDeepSession: Boolean(isDeepSession),
     startedAt: Date.now(),
   });
 
@@ -55,24 +57,26 @@ const completeSession = asyncHandler(async (req, res) => {
     await session.save();
 
     if (session.mode === 'focus' || session.mode === 'work') {
-      const user = await User.findById(req.user._id);
-      user.xp += 25;
-      user.points += 10;
-      user.level = Math.floor(user.xp / 100) + 1;
-      await user.save();
+      await awardFocusSession(req.user._id);
+      await User.findByIdAndUpdate(req.user._id, {
+        $inc: {
+          totalFocusMinutes: Math.max(1, Math.round(session.duration / 60)),
+          ...(session.isDeepSession ? { totalDeepSessions: 1 } : {}),
+        },
+      });
     }
   }
 
-  res.json(session);
+  res.status(200).json(session);
 });
 
 const getHistory = asyncHandler(async (req, res) => {
-  const sessions = await PomodoroSession.find({
-    user: req.user._id,
-    completed: true,
-  }).sort({ completedAt: -1 });
-
-  res.json(sessions);
+  const history = await PomodoroSession.find({ user: req.user._id }).sort({ startedAt: -1 });
+  res.status(200).json(history);
 });
 
-module.exports = { startSession, completeSession, getHistory };
+module.exports = {
+  startSession,
+  completeSession,
+  getHistory,
+};

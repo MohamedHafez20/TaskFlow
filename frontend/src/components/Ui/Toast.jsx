@@ -55,15 +55,21 @@ const Toast = ({ message, type = 'error', isVisible, onClose, position = "top-ri
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -50, scale: 0.3 }}
           transition={{ duration: 0.3 }}
-          className={`fixed ${getPositionClasses()} z-50`}
+          className={`fixed ${getPositionClasses()} z-[9999] pointer-events-none`}
         >
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-2xl max-w-sm">
+          <div className={`rounded-2xl border p-4 shadow-lg max-w-sm ${
+            type === 'error'
+              ? 'bg-red-600 border-red-500 shadow-red-500/30'
+              : type === 'success'
+                ? 'bg-emerald-600 border-emerald-500 shadow-emerald-500/30'
+                : 'bg-sky-600 border-sky-500 shadow-sky-500/30'
+          }`}>
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0">
                 {getIcon()}
               </div>
               <div className="flex-1">
-                <p className="text-white text-sm font-medium">{message}</p>
+                <p className="text-white text-sm font-semibold">{message}</p>
               </div>
               <button
                 onClick={onClose}

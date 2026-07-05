@@ -35,6 +35,7 @@ export default function GamesZone() {
 
   const xpToNext = myStats ? 100 - (myStats.xp % 100) : 100;
   const xpPct    = myStats ? myStats.xp % 100 : 0;
+  const levelName = myStats?.levelName || 'Beginner';
 
   return (
     <div className="p-8">
@@ -47,7 +48,7 @@ export default function GamesZone() {
           {/* Level & XP */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
                   <Zap size={24} className="text-white" />
@@ -55,6 +56,7 @@ export default function GamesZone() {
                 <div>
                   <p className="text-slate-400 text-sm">Current Level</p>
                   <p className="text-2xl font-bold text-white">Level {myStats?.level}</p>
+                  <p className="text-xs text-slate-400 mt-1">{levelName}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -71,6 +73,16 @@ export default function GamesZone() {
                 <motion.div initial={{ width: 0 }} animate={{ width: `${xpPct}%` }}
                   transition={{ duration: 1, ease: 'easeOut' }}
                   className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <div className="rounded-2xl bg-slate-900/60 p-4">
+                <p className="text-xs uppercase tracking-wider text-slate-500">Current Streak</p>
+                <p className="mt-2 text-lg font-bold text-white">{myStats?.currentStreak ?? 0} days</p>
+              </div>
+              <div className="rounded-2xl bg-slate-900/60 p-4">
+                <p className="text-xs uppercase tracking-wider text-slate-500">Best Streak</p>
+                <p className="mt-2 text-lg font-bold text-white">{myStats?.longestStreak ?? 0} days</p>
               </div>
             </div>
           </motion.div>

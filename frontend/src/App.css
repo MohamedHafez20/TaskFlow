@@ -182,3 +182,42 @@
     border-right-color: var(--border);
   }
 }
+
+/* Blob Animation Delays */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-3000 {
+  animation-delay: 3s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animation-delay-5000 {
+  animation-delay: 5s;
+}
+
+/* Card Styling - Glass Morphism */
+.card-glass {
+  @apply backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl;
+}
+
+.card-glass-lg {
+  @apply backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl;
+}
+
+/* Accent Color Utilities */
+.text-accent {
+  @apply text-[#06f4e1];
+}
+
+.border-accent {
+  @apply border-[#06f4e1];
+}
+
+.bg-accent {
+  @apply bg-[#06f4e1];
+}

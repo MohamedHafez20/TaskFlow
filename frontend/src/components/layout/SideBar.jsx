@@ -1,24 +1,28 @@
-import { FaHome, FaHistory, FaChartLine, FaCalendar, FaCog, FaSignOutAlt, FaTrophy, FaGamepad, FaClock, FaRocket } from 'react-icons/fa';
+import { FaHome, FaHistory, FaChartLine, FaCalendar, FaCog, FaSignOutAlt, FaTrophy, FaGamepad, FaClock, FaRobot } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import useTaskStore from '../../store/useTaskStore';
 import useUserStore from '../../store/useUserStore';
 import { useToast } from '../Ui/ToastProvider';
+import taskFlowLogo from '../../assets/Logo.webp';
 
 function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const userName = useUserStore((s) => s.userName) || 'Kamal Abou Eid';
   const logout = useUserStore((s) => s.logout);
+  const gamificationStats = useTaskStore((s) => s.gamificationStats);
   const { showToast } = useToast();
 
-  // 🎯 الحفاظ على نفس الصفحات القديمة بالملي كما هي
+
   const menuItems = [
     { label: 'Dashboard', icon: FaHome, path: '/app/dashboard' },
-    { label: 'Timer', icon: FaClock, path: '/app/pomodoro' },
-    { label: 'Tasks', icon: FaTrophy, path: '/app/productivity' },
+    { label: 'Pomodoro', icon: FaClock, path: '/app/pomodoro' },
+    { label: 'Productivity Level', icon: FaTrophy, path: '/app/productivity' },
     { label: 'Analytics', icon: FaChartLine, path: '/app/analytics' },
     { label: 'Calendar', icon: FaCalendar, path: '/app/calendar' },
     { label: 'Games', icon: FaGamepad, path: '/app/games' },
+    { label: 'Chatbot', icon: FaRobot, path: '/app/chatbot' },
     { label: 'History', icon: FaHistory, path: '/app/history' },
     { label: 'Settings', icon: FaCog, path: '/app/settings' },
   ];
@@ -49,7 +53,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
 
   return (
     <>
-      {/* الـ Overlay للموبايل */}
+
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -62,21 +66,20 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         )}
       </AnimatePresence>
 
-      {/* 🌌 الـ Sidebar بالديزاين الجديد الأنيق بالملي */}
       <motion.aside
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
-        className={`w-full max-w-[260px] border-r border-white/10 bg-[#090d18]/70 p-6 backdrop-blur-2xl flex flex-col justify-between transition-all ${
+        className={`w-full max-w-[260px] border-r border-white/10 p-6 backdrop-blur-2xl flex flex-col justify-between transition-all ${
           isMobileMenuOpen
             ? 'fixed inset-y-0 left-0 z-50 shadow-2xl'
             : 'hidden md:flex'
         }`}
       >
         <div className="space-y-7 flex flex-col flex-1 overflow-hidden">
-          {/* 🚀 العلوي: الحفاظ على اسم السيستم Task Flow وأيقونة الصاروخ مع ستايل فخم */}
+    
           <div className="flex items-center gap-3 px-2 flex-shrink-0">
-            <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-[0_0_15px_rgba(139,92,246,0.15)]">
-              <FaRocket className="text-sm" />
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl overflow-hidden">
+              <img src={taskFlowLogo} alt="TaskFlow logo" className="h-full w-full object-cover" />
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 leading-none">
@@ -88,7 +91,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             </div>
           </div>
 
-          {/* 🧭 المنتصف: قائمة التنقل الأنيقة مع الـ Icons المدمجة بنعومة والـ Active Indicator الرايق */}
+      
           <motion.nav 
             variants={containerVariants} 
             initial="hidden" 
@@ -141,7 +144,12 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             </div>
             <div className="max-w-[120px] truncate">
               <p className="text-xs font-bold text-white tracking-wide truncate">{userName}</p>
-              <p className="text-[10px] font-medium text-slate-500">Free Tier</p>
+              <p className="text-[10px] font-medium text-slate-500">
+                {gamificationStats?.levelName ? `${gamificationStats.levelName} • Lv ${gamificationStats.level}` : 'Free Tier'}
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                {gamificationStats ? `🔥 ${gamificationStats.currentStreak} day streak` : 'Streak not loaded'}
+              </p>
             </div>
           </button>
 

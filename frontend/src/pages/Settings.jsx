@@ -74,7 +74,7 @@ function Settings() {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen bg-[#0b0b10] p-3 text-slate-300 sm:p-6"
+      className="bg-transparent p-3 text-slate-300 sm:p-6"
     >
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="rounded-2xl border border-white/[0.05] bg-[#161622] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">

@@ -9,6 +9,7 @@ const sessionSchema = new mongoose.Schema(
       default: 'focus',
     },
     duration: { type: Number, required: true },
+    isDeepSession: { type: Boolean, default: false },
     completed: { type: Boolean, default: false },
     startedAt: { type: Date, default: Date.now },
     completedAt: { type: Date },

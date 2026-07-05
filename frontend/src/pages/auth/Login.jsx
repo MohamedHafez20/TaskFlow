@@ -6,6 +6,7 @@ import { useToast } from '../../components/Ui/ToastProvider';
 import useUserStore from '../../store/useUserStore';
 import usePageTitle from '../../hooks/usePageTitle';
 import taskFlowLogo from '../../assets/reg.log.png'; // تأكد من مسار الصورة عندك
+import BackgroundWrapper from '../../components/layout/BackgroundWrapper';
 
 function Login() {
   usePageTitle('Login');
@@ -42,8 +43,17 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b10] text-slate-300 flex items-center justify-center p-4 md:p-8 relative overflow-hidden antialiased font-sans select-none">
+    <div className="min-h-screen bg-transparent text-slate-300 flex items-center justify-center p-4 md:p-8 relative overflow-hidden antialiased font-sans select-none">
+      <BackgroundWrapper />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/[0.06] blur-[140px] rounded-full pointer-events-none" />
+
+      {/* Back to Home Button */}
+      <Link
+        to="/"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 inline-flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-4 py-2.5 text-xs font-bold text-slate-300 hover:bg-white/10 hover:border-purple-500/30 transition-all duration-300 z-50 shadow-lg"
+      >
+        <FaArrowLeft size={10} className="text-purple-400 group-hover:-translate-x-0.5 transition-transform" /> Back to Home
+      </Link>
 
       <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[1.3fr_440px] gap-8 items-center relative z-10">
         
@@ -118,9 +128,17 @@ function Login() {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/[0.03] flex items-center justify-between text-[11px] font-semibold text-slate-500">
-            <Link to="/register" className="text-purple-400 hover:text-purple-300">Create Account</Link>
-            <Link to="/" className="flex items-center gap-1.5 hover:text-white transition-colors"><FaArrowLeft size={9} /> Home</Link>
+          <div className="mt-8 pt-6 border-t border-white/[0.03] space-y-4">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+              <Link to="/register" className="text-purple-400 hover:text-purple-300">Create Account</Link>
+              <Link to="/forgot-password" className="text-slate-400 hover:text-purple-300 transition-colors">Forgot Password?</Link>
+            </div>
+            
+            <div className="flex justify-center pt-3 border-t border-white/[0.02]">
+              <Link to="/" className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-purple-400 transition-colors">
+                <FaArrowLeft size={10} /> Back to Home
+              </Link>
+            </div>
           </div>
         </motion.div>
       </div>

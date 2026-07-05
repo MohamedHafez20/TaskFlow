@@ -14,19 +14,22 @@ const Settings = lazy(() => import("../pages/Settings"));
 const ProductivityLevel = lazy(() => import("../pages/ProductivityLevel"));
 const Pomodoro = lazy(() => import("../pages/Pomodoro"));
 const GamesPage = lazy(() => import("../pages/GamesPage"));
+const Chatbot = lazy(() => import("../pages/Chatbot"));
 const Login = lazy(() => import("../pages/auth/Login"));
 const Register = lazy(() => import("../pages/auth/Register"));
+const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
+const Home = lazy(() => import("../pages/Home"));
 const ProtectedRoute = lazy(() => import("./ProtectedRoute"));
 const Layout = lazy(() => import("../components/layout/Layout"));
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/login" replace />
+    element: <Home />
   },
   {
     path: "/home",
-    element: <Navigate to="/login" replace />
+    element: <Home />
   },
   {
     path: "/login",
@@ -35,6 +38,10 @@ const router = createBrowserRouter([
   {
     path: "/register",
     element: <Register />
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />
   },
   {
     path: "/app",
@@ -51,6 +58,10 @@ const router = createBrowserRouter([
       {
         path: "games",
         element: <GamesPage />
+      },
+      {
+        path: "chatbot",
+        element: <Chatbot />
       },
       {
         path: "productivity",

@@ -16,6 +16,7 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/tasks', require('./routes/task.routes'));
 app.use('/api/pomodoro', require('./routes/pomodoro.routes'));
 app.use('/api/gamification', require('./routes/gamification.routes'));
+app.use('/api/chat', require('./routes/chat.routes'));
 
 app.get('/', (req, res) => res.json({ message: 'TaskFlow API is running' }));
 
