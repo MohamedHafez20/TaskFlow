@@ -5,10 +5,42 @@
 @tailwind utilities;
 
 :root {
+  /* Dark theme (default). Values match the original hardcoded colors. */
+  --c-deep: #030305;
+  --c-appbg: #0A0A0F;
+  --c-card: #13131a;
+  --c-card2: #161622;
+  --c-input: #0f1117;
+  --c-hair: rgba(255, 255, 255, 0.05);
+  --c-ink: #ffffff;
+  --c-sub: #cbd5e1;   /* slate-300 */
+  --c-muted: #94a3b8; /* slate-400 */
+  --c-faint: #64748b; /* slate-500/600 */
+  --c-accent: #06f4e1; /* cyan accent (dark) */
+  --c-base-text: #E4E1E9;
+
   color-scheme: dark;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: #0A0A0F;
-  color: #E4E1E9;
+  background-color: var(--c-appbg);
+  color: var(--c-base-text);
+}
+
+/* Light theme overrides */
+html.light {
+  --c-deep: #eef0f4;
+  --c-appbg: #f4f5f7;
+  --c-card: #ffffff;
+  --c-card2: #f1f2f6;
+  --c-input: #ffffff;
+  --c-hair: rgba(15, 23, 42, 0.10);
+  --c-ink: #15151f;
+  --c-sub: #334155;
+  --c-muted: #5b6472;
+  --c-faint: #8a93a3;
+  --c-accent: #0e7490; /* darker cyan for contrast on light */
+  --c-base-text: #1f2430;
+
+  color-scheme: light;
 }
 
 html {
@@ -19,8 +51,15 @@ body {
   min-height: 100vh;
   background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.12), transparent 24%),
               radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.12), transparent 18%),
-              #0A0A0F;
-  color: #E4E1E9;
+              var(--c-appbg);
+  color: var(--c-base-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.light body {
+  background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.08), transparent 24%),
+              radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.08), transparent 18%),
+              var(--c-appbg);
 }
 
 * {

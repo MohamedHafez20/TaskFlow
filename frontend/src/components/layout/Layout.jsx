@@ -26,7 +26,7 @@ function Layout() {
 
   return (
     // 1. Ensure the parent container is transparent so the background shows through
-    <div className="min-h-screen bg-transparent text-white relative">
+    <div className="min-h-screen bg-transparent text-ink relative">
       <BackgroundWrapper />
       
       {/* 2. Changed z-0 to z-10 to ensure layout sits above the fixed background */}

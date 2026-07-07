@@ -26,7 +26,7 @@ function TaskForm({ editingTask, setEditingTask }) {
   }, [editingTask]);
 
   const categories = [
-    { value: "general", label: "General", icon: "📝", color: "text-gray-400" },
+    { value: "general", label: "General", icon: "📝", color: "text-muted" },
     { value: "work", label: "Work", icon: "💼", color: "text-blue-400" },
     { value: "personal", label: "Personal", icon: "🎯", color: "text-green-400" },
     { value: "health", label: "Health", icon: "💪", color: "text-red-400" },
@@ -134,7 +134,7 @@ function TaskForm({ editingTask, setEditingTask }) {
       {/* Main Input */}
       <div className="relative">
         <motion.div
-          className="bg-white/10 backdrop-blur-xl border-2 border-white/20 rounded-2xl p-4 hover:border-purple-400/50 transition-all group"
+          className="bg-hair backdrop-blur-xl border-2 border-hair rounded-2xl p-4 hover:border-purple-400/50 transition-all group"
           whileFocus={{ borderColor: "#a78bfa" }}
         >
 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
@@ -147,7 +147,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                 onChange={(e) => setTitle(e.target.value)}
                 onKeyDown={handleKeyPress}
                 disabled={isLoading}
-                className="flex-1 bg-transparent text-white placeholder-gray-400 outline-none text-lg px-2"
+                className="flex-1 bg-transparent text-ink placeholder-muted outline-none text-lg px-2"
               />
             </div>
 
@@ -158,7 +158,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowCategoryModal(true)}
                 disabled={isLoading}
-                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-3 py-2 text-white hover:border-purple-400/50 transition-all flex items-center gap-2 min-w-0"
+                className="bg-hair backdrop-blur-xl border border-hair rounded-xl px-3 py-2 text-ink hover:border-purple-400/50 transition-all flex items-center gap-2 min-w-0"
               >
                 {categories.find(cat => cat.value === category)?.icon}
                 <span className="hidden sm:inline">{categories.find(cat => cat.value === category)?.label}</span>
@@ -208,18 +208,18 @@ function TaskForm({ editingTask, setEditingTask }) {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 5 }}
-              className="mt-3 pt-3 border-t border-white/10 space-y-2"
+              className="mt-3 pt-3 border-t border-hair space-y-2"
             >
-              <div className="flex items-center gap-2 text-sm text-gray-300">
+              <div className="flex items-center gap-2 text-sm text-sub">
                 <FaLightbulb className="text-yellow-400" />
                 <span className="font-semibold">🤖 AI Analysis:</span>
               </div>
-              <div className="bg-white/5 rounded-lg p-3 space-y-1 text-sm">
-                <p className="text-gray-300">Suggested category: <span className="font-semibold text-white">{categories.find((cat) => cat.value === suggestion.category)?.label || 'General'}</span></p>
+              <div className="bg-hair rounded-lg p-3 space-y-1 text-sm">
+                <p className="text-sub">Suggested category: <span className="font-semibold text-ink">{categories.find((cat) => cat.value === suggestion.category)?.label || 'General'}</span></p>
                 <p className={`font-semibold ${suggestion.priority === 'Strong' ? 'text-red-300' : suggestion.priority === 'Weak' ? 'text-green-300' : 'text-yellow-300'}`}>
                   Priority: {suggestion.priority === 'Strong' ? 'Strong' : suggestion.priority === 'Weak' ? 'Weak' : 'Medium'}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted">
                   Based on keywords like {title.toLowerCase().includes('urgent') ? 'urgent' : title.toLowerCase().includes('meeting') ? 'meeting' : 'your task'}.
                 </p>
               </div>
@@ -233,9 +233,9 @@ function TaskForm({ editingTask, setEditingTask }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="bg-white/5 border border-white/10 rounded-xl p-3"
+        className="bg-hair border border-hair rounded-xl p-3"
       >
-        <p className="text-xs text-gray-400 flex items-center gap-2">
+        <p className="text-xs text-muted flex items-center gap-2">
           <FaFire className="text-orange-400" />
           💡 Pro Tip: Use keywords like "debug", "meeting", "exercise" for smart priority detection
         </p>
@@ -256,11 +256,11 @@ function TaskForm({ editingTask, setEditingTask }) {
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="bg-gradient-to-br from-purple-900/95 to-blue-900/95 backdrop-blur-xl border border-white/20 rounded-2xl p-6 w-full max-w-sm"
+                className="bg-gradient-to-br from-purple-900/95 to-blue-900/95 backdrop-blur-xl border border-hair rounded-2xl p-6 w-full max-w-sm"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-ink flex items-center gap-2">
                     <FaTag className="text-purple-400" />
                     Choose Category
                   </h3>
@@ -268,7 +268,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowCategoryModal(false)}
-                    className="text-white/70 hover:text-white"
+                    className="text-white/70 hover:text-ink"
                   >
                     <FaTimes />
                   </motion.button>
@@ -288,7 +288,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                       className={`p-3 rounded-xl border transition-all text-left ${
                         category === cat.value
                           ? 'bg-purple-600/50 border-purple-400 text-white'
-                          : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20'
+                          : 'bg-hair border-hair text-sub hover:bg-hair'
                       }`}
                     >
                       <div className="text-2xl mb-1">{cat.icon}</div>

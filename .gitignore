@@ -15,3 +15,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local tool configs
+.claude/
+.agents/

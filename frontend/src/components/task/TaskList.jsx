@@ -11,7 +11,7 @@ function TaskList({ tasks = null, setEditingTask }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className='rounded-[32px] border border-white/10 bg-[#111118] p-10 text-center text-slate-400'
+        className='rounded-[32px] border border-hair bg-card2 p-10 text-center text-muted'
       >
         <p className='text-lg'>🚀 No tasks yet.</p>
         <p className='text-sm mt-2'>Add a task to fill your focus dashboard.</p>

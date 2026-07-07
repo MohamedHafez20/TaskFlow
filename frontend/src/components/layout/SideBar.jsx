@@ -10,6 +10,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const userName = useUserStore((s) => s.userName) || 'Kamal Abou Eid';
+  const avatarUrl = useUserStore((s) => s.avatarUrl);
   const logout = useUserStore((s) => s.logout);
   const gamificationStats = useTaskStore((s) => s.gamificationStats);
   const { showToast } = useToast();
@@ -69,7 +70,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
       <motion.aside
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
-        className={`w-full max-w-[260px] border-r border-white/10 p-6 backdrop-blur-2xl flex flex-col justify-between transition-all ${
+        className={`w-full max-w-[260px] border-r border-hair p-6 backdrop-blur-2xl flex flex-col justify-between transition-all ${
           isMobileMenuOpen
             ? 'fixed inset-y-0 left-0 z-50 shadow-2xl'
             : 'hidden md:flex'
@@ -82,10 +83,10 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
               <img src={taskFlowLogo} alt="TaskFlow logo" className="h-full w-full object-cover" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500 leading-none">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted leading-none">
                 Task manager
               </p>
-              <h2 className="text-base font-bold text-white mt-1.5 tracking-wide">
+              <h2 className="text-base font-bold text-ink mt-1.5 tracking-wide">
                 Task Flow
               </h2>
             </div>
@@ -111,11 +112,11 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
                   className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-left text-xs font-bold tracking-wide transition-all duration-200 ${
                     isActive
                       ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
-                      : 'text-slate-400 hover:bg-white/[0.02] hover:text-slate-200'
+                      : 'text-muted hover:bg-hair hover:text-ink'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={`text-sm ${isActive ? 'text-purple-400' : 'text-slate-500'}`} />
+                    <Icon className={`text-sm ${isActive ? 'text-purple-400' : 'text-muted'}`} />
                     <span>{item.label}</span>
                   </div>
                   
@@ -132,22 +133,26 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         </div>
 
         {/* 👤 السفلي: كارد المستخدم النظيف وزر الخروج المدمج من الديزاين الجديد */}
-        <div className="border-t border-white/[0.04] pt-4 px-2 flex items-center justify-between flex-shrink-0 mt-4">
+        <div className="border-t border-hair pt-4 px-2 flex items-center justify-between flex-shrink-0 mt-4">
           <button
             type="button"
             onClick={() => handleMenuClick('/app/user-profile')}
-            className="flex items-center gap-3 flex-1 min-w-0 rounded-xl p-2 -m-2 hover:bg-white/[0.03] transition-all text-left"
+            className="flex items-center gap-3 flex-1 min-w-0 rounded-xl p-2 -m-2 hover:bg-hair transition-all text-left"
             title="Open profile"
           >
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-purple-600 to-fuchsia-600 flex items-center justify-center text-xs font-black text-white uppercase shadow-md shadow-purple-500/10">
-              {userName.substring(0, 2)}
+            <div className="h-8 w-8 overflow-hidden rounded-full bg-gradient-to-tr from-purple-600 to-fuchsia-600 flex items-center justify-center text-xs font-black text-white uppercase shadow-md shadow-purple-500/10">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+              ) : (
+                userName.substring(0, 2)
+              )}
             </div>
             <div className="max-w-[120px] truncate">
-              <p className="text-xs font-bold text-white tracking-wide truncate">{userName}</p>
-              <p className="text-[10px] font-medium text-slate-500">
+              <p className="text-xs font-bold text-ink tracking-wide truncate">{userName}</p>
+              <p className="text-[10px] font-medium text-muted">
                 {gamificationStats?.levelName ? `${gamificationStats.levelName} • Lv ${gamificationStats.level}` : 'Free Tier'}
               </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">
+              <p className="text-[10px] text-muted mt-0.5">
                 {gamificationStats ? `🔥 ${gamificationStats.currentStreak} day streak` : 'Streak not loaded'}
               </p>
             </div>
@@ -155,7 +160,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
 
           <button
             onClick={handleLogout}
-            className="h-8 w-8 rounded-lg bg-white/[0.02] border border-white/[0.04] flex items-center justify-center text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all"
+            className="h-8 w-8 rounded-lg bg-hair border border-hair flex items-center justify-center text-muted hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all"
             title="Logout"
           >
             <FaSignOutAlt size={12} />

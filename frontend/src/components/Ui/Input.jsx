@@ -54,16 +54,16 @@ function Input({ handleStartLogin }) {
   };
 
   return (
-    <div className="w-full text-slate-300 font-sans antialiased select-none">
+    <div className="w-full text-sub font-sans antialiased select-none">
       
       {/* 🧭 سويتش وضع الدخول الاحترافي */}
-      <div className="flex gap-1.5 mb-6 bg-[#161622]/50 border border-white/[0.02] p-1 rounded-xl">
+      <div className="flex gap-1.5 mb-6 bg-card2 border border-hair p-1 rounded-xl">
         <button
           type="button"
           onClick={() => !isLoading && setLoginMode('credentials')}
           disabled={isLoading}
           className={`flex-1 py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider relative ${
-            loginMode === 'credentials' ? 'text-purple-400' : 'text-slate-500 hover:text-slate-300'
+            loginMode === 'credentials' ? 'text-purple-400' : 'text-muted hover:text-sub'
           }`}
         >
           <FaLock size={10} />
@@ -81,7 +81,7 @@ function Input({ handleStartLogin }) {
           onClick={() => !isLoading && setLoginMode('guest')}
           disabled={isLoading}
           className={`flex-1 py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider relative ${
-            loginMode === 'guest' ? 'text-purple-400' : 'text-slate-500 hover:text-slate-300'
+            loginMode === 'guest' ? 'text-purple-400' : 'text-muted hover:text-sub'
           }`}
         >
           <FaUserSecret size={12} />
@@ -110,7 +110,7 @@ function Input({ handleStartLogin }) {
             >
               {/* حقل البريد الإلكتروني */}
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-faint">
                   <FaEnvelope size={12} />
                 </span>
                 <input
@@ -118,7 +118,7 @@ function Input({ handleStartLogin }) {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-[#161622]/60 text-white placeholder-slate-600 border border-white/[0.03] focus:outline-none focus:border-purple-500/50 text-xs font-semibold tracking-wide transition-all font-mono"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-card2 text-ink placeholder-faint border border-hair focus:outline-none focus:border-purple-500/50 text-xs font-semibold tracking-wide transition-all font-mono"
                   disabled={isLoading}
                   required
                 />
@@ -126,7 +126,7 @@ function Input({ handleStartLogin }) {
 
               {/* حقل كلمة المرور */}
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-faint">
                   <FaLock size={12} />
                 </span>
                 <input
@@ -134,14 +134,14 @@ function Input({ handleStartLogin }) {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-[#161622]/60 text-white placeholder-slate-600 border border-white/[0.03] focus:outline-none focus:border-purple-500/50 text-xs font-semibold tracking-wide transition-all font-mono"
+                  className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-card2 text-ink placeholder-faint border border-hair focus:outline-none focus:border-purple-500/50 text-xs font-semibold tracking-wide transition-all font-mono"
                   disabled={isLoading}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-sub transition-colors"
                 >
                   {showPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
                 </button>
@@ -149,12 +149,12 @@ function Input({ handleStartLogin }) {
 
               {/* أدوات التحكم الإضافية (Remember me & Forgot Password) */}
               <div className="flex items-center justify-between text-[11px] px-1 font-medium">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-300 transition-colors">
+                <label className="flex items-center gap-2 cursor-pointer text-muted hover:text-sub transition-colors">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-white/[0.05] bg-[#161622] text-purple-600 focus:ring-0 focus:ring-offset-0 h-3.5 w-3.5 transition-all"
+                    className="rounded border-hair bg-card2 text-purple-600 focus:ring-0 focus:ring-offset-0 h-3.5 w-3.5 transition-all"
                   />
                   <span>Remember me</span>
                 </label>
@@ -195,11 +195,11 @@ function Input({ handleStartLogin }) {
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="space-y-4"
             >
-              <div className="bg-[#181824]/40 border border-purple-500/10 rounded-2xl p-4 text-center">
-                <p className="text-xs font-bold text-slate-300">
+              <div className="bg-card2 border border-purple-500/10 rounded-2xl p-4 text-center">
+                <p className="text-xs font-bold text-sub">
                   👋 Welcome as an <span className="text-purple-400">Anonymous Guest</span>
                 </p>
-                <p className="text-[10px] text-slate-500 font-medium mt-1">
+                <p className="text-[10px] text-muted font-medium mt-1">
                   Access standard operational features instantly without a profile session.
                 </p>
               </div>
@@ -208,7 +208,7 @@ function Input({ handleStartLogin }) {
                 type="button"
                 onClick={handleGuestLogin}
                 disabled={isLoading}
-                className="w-full py-3.5 rounded-2xl bg-[#161622] hover:bg-[#1c1c2b] border border-white/[0.04] hover:border-purple-500/20 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50"
+                className="w-full py-3.5 rounded-2xl bg-card2 hover:bg-card2 border border-hair hover:border-purple-500/20 text-sub hover:text-ink font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50"
               >
                 {isLoading ? (
                   <>

@@ -16,13 +16,13 @@ export default function Navbar() {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div className="flex h-screen bg-slate-900">
+    <div className="flex h-screen bg-appbg">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-800 flex flex-col border-r border-slate-700">
+      <aside className="w-64 bg-card2 flex flex-col border-r border-hair">
         {/* Logo */}
-        <div className="p-6 border-b border-slate-700">
-          <h1 className="text-2xl font-bold text-white">⚡ TaskFlow</h1>
-          <p className="text-slate-400 text-sm mt-1">DEPI Project</p>
+        <div className="p-6 border-b border-hair">
+          <h1 className="text-2xl font-bold text-ink">⚡ TaskFlow</h1>
+          <p className="text-muted text-sm mt-1">DEPI Project</p>
         </div>
 
         {/* Nav links */}
@@ -34,7 +34,7 @@ export default function Navbar() {
                 `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-blue-600 text-white'
-                    : 'text-slate-400 hover:bg-slate-700 hover:text-white'
+                    : 'text-muted hover:bg-hair hover:text-ink'
                 }`
               }
             >
@@ -45,19 +45,19 @@ export default function Navbar() {
         </nav>
 
         {/* User + Logout */}
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-hair">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
               {user?.name?.[0]?.toUpperCase()}
             </div>
             <div>
-              <p className="text-white text-sm font-medium">{user?.name}</p>
-              <p className="text-slate-400 text-xs">{user?.email}</p>
+              <p className="text-ink text-sm font-medium">{user?.name}</p>
+              <p className="text-muted text-xs">{user?.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 w-full px-3 py-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 w-full px-3 py-2 text-muted hover:text-red-400 hover:bg-hair rounded-lg text-sm transition-colors"
           >
             <LogOut size={16} /> Logout
           </button>

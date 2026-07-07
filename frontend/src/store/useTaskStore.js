@@ -110,9 +110,26 @@ const useTaskStore = create((set, get) => ({
     }
   },
 
-  startPomodoroSession: async ({ mode = 'focus', duration }) => {
+  awardGameScore: async ({ gameId, score = 0, xpEarned = 0, pointsEarned = 0 }) => {
     try {
-      const { data } = await api.post('/pomodoro/start', { mode, duration });
+      const { data } = await api.post('/gamification/game-score', {
+        gameId,
+        score,
+        xpEarned,
+        pointsEarned,
+      });
+      const stats = await get().fetchGamificationStats();
+      return { success: true, data, stats };
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to award game score';
+      set({ error: message });
+      return { success: false, message };
+    }
+  },
+
+  startPomodoroSession: async ({ mode = 'focus', duration, isDeepSession }) => {
+    try {
+      const { data } = await api.post('/pomodoro/start', { mode, duration, isDeepSession });
       return { success: true, data };
     } catch (err) {
       return { success: false, message: err.response?.data?.message || 'Failed to start session' };

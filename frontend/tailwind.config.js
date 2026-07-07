@@ -7,6 +7,17 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Theme-aware semantic tokens (flip via .light on <html>; dark values
+        // equal the original hardcoded colors so Dark Mode is unchanged).
+        appbg: 'var(--c-appbg)',
+        card: 'var(--c-card)',
+        card2: 'var(--c-card2)',
+        inputbg: 'var(--c-input)',
+        hair: 'var(--c-hair)',
+        ink: 'var(--c-ink)',
+        sub: 'var(--c-sub)',
+        muted: 'var(--c-muted)',
+        faint: 'var(--c-faint)',
         midnight: '#0A0A0F',
         surface: '#131318',
         surfaceSoft: '#181824',

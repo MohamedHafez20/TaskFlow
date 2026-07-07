@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useTaskStore from '../../store/useTaskStore';
 import useUserStore from '../../store/useUserStore';
+import useThemeStore from '../../store/useThemeStore';
 import { 
   FaBars, 
   FaBell, 
@@ -17,10 +18,13 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const userName = useUserStore((s) => s.userName);
+  const avatarUrl = useUserStore((s) => s.avatarUrl);
   const tasks = useTaskStore((s) => s.tasks);
   const setGlobalSearch = useTaskStore((s) => s.setGlobalSearch);
   const globalSearch = useTaskStore((s) => s.globalSearch);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
+  const isDarkMode = theme === 'dark';
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const [isNotificationsMuted, setIsNotificationsMuted] = useState(false);
@@ -64,7 +68,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-slate-300"
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-hair bg-hair text-sub"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <FaTimes size={16} /> : <FaBars size={16} />}
@@ -72,7 +76,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
 
           <div className="flex flex-col">
             <h1
-              className="text-base font-bold text-white tracking-wide cursor-pointer hover:text-purple-300 transition-colors"
+              className="text-base font-bold text-ink tracking-wide cursor-pointer hover:text-purple-300 transition-colors"
               onClick={handleProfileClick}
               role="button"
               tabIndex={0}
@@ -93,7 +97,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
 
         {/* 2. المنتصف: شريط البحث */}
         <div className="relative mx-2 flex-1 max-w-md md:mx-8">
-          <div className={`pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${globalSearch.trim() ? 'text-purple-400' : 'text-slate-500'}`}>
+          <div className={`pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${globalSearch.trim() ? 'text-purple-400' : 'text-muted'}`}>
             <FaSearch className="h-full w-full" />
           </div>
           <input
@@ -103,11 +107,11 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
             onChange={handleSearchChange}
             placeholder="Search tasks by title..."
-            className="w-full rounded-full border border-white/[0.06] bg-white/[0.03] py-2.5 pl-11 pr-4 text-xs text-slate-300 outline-none transition placeholder:text-slate-600 focus:border-purple-500/50 focus:bg-white/[0.05] focus:ring-0"
+            className="w-full rounded-full border border-hair bg-hair py-2.5 pl-11 pr-4 text-xs text-sub outline-none transition placeholder:text-faint focus:border-purple-500/50 focus:bg-hair focus:ring-0"
           />
 
           {showSearchMenu && (
-            <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] rounded-2xl border border-white/[0.06] bg-[#0f1322]/95 p-2 shadow-2xl backdrop-blur-xl">
+            <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] rounded-2xl border border-hair bg-card2 p-2 shadow-2xl backdrop-blur-xl">
               {searchResults.length > 0 ? (
                 searchResults.map((result) => (
                   <button
@@ -117,14 +121,14 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
                       setGlobalSearch(result.title);
                       navigate('/app/dashboard');
                     }}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/[0.05]"
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-sub transition hover:bg-hair"
                   >
                     <span className="truncate">{result.title}</span>
-                    {result.completed ? <span className="text-[10px] uppercase text-slate-500">Done</span> : <span className="text-[10px] uppercase text-purple-400">Task</span>}
+                    {result.completed ? <span className="text-[10px] uppercase text-muted">Done</span> : <span className="text-[10px] uppercase text-purple-400">Task</span>}
                   </button>
                 ))
               ) : (
-                <div className="rounded-xl px-3 py-2 text-sm text-slate-500">No matching tasks found.</div>
+                <div className="rounded-xl px-3 py-2 text-sm text-muted">No matching tasks found.</div>
               )}
             </div>
           )}
@@ -133,7 +137,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         {/* 3. الناحية اليمين: الأزرار والتفاعل */}
         <div className="flex items-center gap-3">
           
-          <span className="hidden sm:inline-flex items-center rounded-full bg-white/[0.03] border border-white/[0.06] px-3 py-1.5 text-[11px] font-medium text-slate-400">
+          <span className="hidden sm:inline-flex items-center rounded-full bg-hair border border-hair px-3 py-1.5 text-[11px] font-medium text-muted">
             Efficiency: <strong className="text-purple-400 ml-1">{completionRate}%</strong>
           </span>
 
@@ -142,7 +146,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             onClick={() => setIsNotificationsMuted(!isNotificationsMuted)}
             className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition relative duration-200 ${
               isNotificationsMuted 
-                ? 'border-white/[0.04] bg-white/[0.01] text-slate-600 hover:text-slate-400' 
+                ? 'border-white/[0.04] bg-hair text-faint hover:text-muted' 
                 : 'border-purple-500/20 bg-purple-500/5 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300'
             }`}
             title={isNotificationsMuted ? "Unmute Notifications" : "Mute Notifications"}
@@ -156,24 +160,30 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
           </button>
           
           {/* زرار الثيم */}
-          <button 
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-slate-400 transition hover:bg-white/[0.08] hover:text-white"
+          <button
+            onClick={toggleTheme}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-hair bg-hair text-muted transition hover:bg-hair hover:text-ink"
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle theme"
           >
             {isDarkMode ? <FaMoon size={13} /> : <FaSun size={13} />}
           </button>
 
-          <div className="h-6 w-[1px] bg-white/[0.08] hidden sm:block" />
+          <div className="h-6 w-[1px] bg-hair hidden sm:block" />
 
           {/* الأفاتار */}
           <button
             type="button"
             onClick={handleProfileClick}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 transition-colors"
+            className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 transition-colors"
             aria-label="Open profile"
             title="Open profile"
           >
-            <FaUserCircle className="h-5 w-5" />
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+            ) : (
+              <FaUserCircle className="h-5 w-5" />
+            )}
           </button>
 
         </div>

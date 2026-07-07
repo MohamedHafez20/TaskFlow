@@ -16,6 +16,31 @@ const buildStats = async (userId) => {
   return calculateStats(userId);
 };
 
+const serializeStats = (stats, earned) => {
+  const user = stats.user;
+  const progress = getLevelProgress(user.xp);
+
+  return {
+    points: user.points,
+    xp: user.xp,
+    level: user.level,
+    levelName: user.levelName,
+    tasksDone: stats.tasksDone,
+    focusSessions: stats.focusSessions,
+    deepSessions: stats.deepSessions,
+    focusMinutes: stats.focusMinutes,
+    currentStreak: stats.currentStreak,
+    longestStreak: stats.longestStreak,
+    badges: earned,
+    allBadges: BADGES.map(({ check, ...badge }) => ({
+      ...badge,
+      earned: earned.includes(badge.id),
+    })),
+    xpInCurrentLevel: progress.xpInLevel,
+    xpToNextLevel: progress.xpToNext,
+  };
+};
+
 const getMyStats = asyncHandler(async (req, res) => {
   const stats = await buildStats(req.user._id);
   const earned = BADGES.filter((badge) => badge.check(stats)).map((badge) => badge.id);
@@ -43,27 +68,61 @@ const getMyStats = asyncHandler(async (req, res) => {
   user.badges = earned;
   await user.save();
 
-  const progress = getLevelProgress(user.xp);
+  res.json(serializeStats(stats, earned));
+});
+
+const awardGameCompletion = asyncHandler(async (req, res) => {
+  const { gameId, score = 0, xpEarned = 0, pointsEarned = 0 } = req.body;
+
+  if (!gameId) {
+    return res.status(400).json({ message: 'Game ID is required.' });
+  }
+
+  const xp = Number(xpEarned);
+  const points = Number(pointsEarned);
+
+  if (!Number.isFinite(xp) || xp < 0 || !Number.isFinite(points) || points < 0) {
+    return res.status(400).json({ message: 'Rewards must be non-negative numbers.' });
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+
+  user.xp += Math.floor(xp);
+  user.points += Math.floor(points);
+  user.level = getLevelFromXp(user.xp);
+  user.levelName = getLevelLabel(user.level);
+  await user.save();
+
+  const stats = await buildStats(req.user._id);
+  const earned = BADGES.filter((badge) => badge.check(stats)).map((badge) => badge.id);
+  const previouslyEarned = stats.user.badges || [];
+  const newlyEarned = earned.filter((badgeId) => !previouslyEarned.includes(badgeId));
+
+  if (newlyEarned.length > 0) {
+    const extraPoints = newlyEarned.reduce((sum, badgeId) => {
+      const badgeConfig = BADGES.find((badge) => badge.id === badgeId);
+      return sum + (badgeConfig?.points || 0);
+    }, 0);
+
+    stats.user.points += extraPoints;
+    stats.user.xp += extraPoints;
+    stats.user.level = getLevelFromXp(stats.user.xp);
+    stats.user.levelName = getLevelLabel(stats.user.level);
+  }
+
+  stats.user.badges = earned;
+  await stats.user.save();
 
   res.json({
-    points: user.points,
-    xp: user.xp,
-    level: user.level,
-    levelName: user.levelName,
-    tasksDone: stats.tasksDone,
-    focusSessions: stats.focusSessions,
-    deepSessions: stats.deepSessions,
-    focusMinutes: stats.focusMinutes,
-    currentStreak: stats.currentStreak,
-    longestStreak: stats.longestStreak,
-    badges: earned,
-    allBadges: BADGES.map(({ check, ...badge }) => ({
-      ...badge,
-      earned: earned.includes(badge.id),
-    })),
-    xpInCurrentLevel: progress.xpInLevel,
-    xpToNextLevel: progress.xpToNext,
+    gameId,
+    score: Number(score) || 0,
+    xpEarned: Math.floor(xp),
+    pointsEarned: Math.floor(points),
+    stats: serializeStats(stats, earned),
   });
 });
 
-module.exports = { getLeaderboard, getMyStats };
+module.exports = { getLeaderboard, getMyStats, awardGameCompletion };

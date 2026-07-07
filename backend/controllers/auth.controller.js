@@ -12,6 +12,7 @@ const authResponse = (user) => ({
   _id: user._id,
   name: user.name,
   email: user.email,
+  avatarUrl: user.avatarUrl || '',
   token: generateToken(user._id),
 });
 
@@ -92,17 +93,77 @@ const getMe = asyncHandler(async (req, res) => {
 });
 
 const updateMe = asyncHandler(async (req, res) => {
-  const { name } = req.body;
-  if (!name || !name.trim()) {
-    res.status(400);
-    throw new Error('Name is required');
+  const { name, preferences } = req.body;
+  const updates = {};
+
+  if (name !== undefined) {
+    if (!name || !name.trim()) {
+      res.status(400);
+      throw new Error('Name is required');
+    }
+    updates.name = name.trim();
   }
+
+  if (preferences !== undefined) {
+    updates.preferences = {
+      ...req.user.preferences,
+      ...preferences,
+    };
+  }
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400);
+    throw new Error('No fields to update');
+  }
+
   const user = await User.findByIdAndUpdate(
     req.user._id,
-    { name: name.trim() },
+    updates,
     { new: true, runValidators: true }
   ).select('-password');
   res.json(user);
 });
 
-module.exports = { register, login, getMe, updateMe };
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    res.status(400);
+    throw new Error('Please fill all password fields');
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (user && (await bcrypt.compare(currentPassword, user.password))) {
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+    res.json({ message: 'Password updated successfully' });
+    return;
+  }
+
+  res.status(401);
+  throw new Error('Invalid current password');
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400);
+    throw new Error('Please provide email address');
+  }
+
+  const user = await User.findOne({ email: email.trim().toLowerCase() });
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User with this email does not exist');
+  }
+
+  res.json({
+    message: 'Reset instructions have been sent successfully (simulated).',
+  });
+});
+
+module.exports = { register, login, getMe, updateMe, changePassword, forgotPassword };

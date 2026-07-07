@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaHeart } from 'react-icons/fa';
 import useUserStore from '../store/useUserStore';
@@ -19,17 +19,24 @@ function Home() {
   const navigate = useNavigate();
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
 
+  // Capture at render time: child effects (WhatPeoplesSay) run before this
+  // component's effect and clear the flag, so we must read it during render.
+  const [pendingReview] = useState(() => Boolean(sessionStorage.getItem('reviewIntent')));
+
   usePageTitle('Welcome to TaskFlow');
 
   useEffect(() => {
-    // If user is already authenticated, take them directly to the dashboard
+    // If a review submission is pending (user just logged in to leave a review),
+    // stay on the landing page so the reviews section can open the modal.
+    if (pendingReview) return;
+    // Otherwise, if already authenticated, take them directly to the dashboard.
     if (isAuthenticated) {
       navigate('/app/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, pendingReview]);
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-300 relative overflow-hidden font-sans scroll-smooth">
+    <div className="min-h-screen bg-transparent text-sub relative overflow-hidden font-sans scroll-smooth">
       {/* Official background wrapper containing grid lines and soft glows */}
       <BackgroundWrapper />
 

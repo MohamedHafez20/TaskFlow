@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
+    avatarUrl: { type: String, default: '' },
     points: { type: Number, default: 0 },
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
@@ -17,6 +18,11 @@ const userSchema = new mongoose.Schema(
     longestLoginStreak: { type: Number, default: 0 },
     lastLoginAt: { type: Date },
     badges: [{ type: String }],
+    preferences: {
+      autoStartBreaks: { type: Boolean, default: true },
+      soundNotifications: { type: Boolean, default: true },
+      deepFocusMood: { type: Boolean, default: false },
+    },
   },
   { timestamps: true }
 );

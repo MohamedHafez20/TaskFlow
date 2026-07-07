@@ -43,6 +43,7 @@ function Dashboard() {
   const [timeLeft, setTimeLeft] = useState(25 * 60); // الوقت الفعلي بالثواني
   const [isTimerRunning, setIsTimerRunning] = useState(false); // حالة التشغيل
   const [customMinutes, setCustomMinutes] = useState('25'); // الإدخال اليدوي للدقائق
+  const activeTimerSessionIdRef = useRef(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,19 +62,52 @@ function Dashboard() {
     } else if (timeLeft === 0) {
       setIsTimerRunning(false);
       alert("⏱️ Pomodoro session finished! Masterfully done.");
+      
+      const sessionId = activeTimerSessionIdRef.current;
+      if (sessionId) {
+        activeTimerSessionIdRef.current = null;
+        useTaskStore.getState().completePomodoroSession(sessionId).then((result) => {
+          if (result.success) {
+            useTaskStore.getState().fetchGamificationStats();
+            useTaskStore.getState().fetchPomodoroHistory();
+          } else {
+            console.error("Session completion rejected:", result.message);
+          }
+        });
+      }
+
+      if (activeTimerTaskId) {
+        const task = tasks.find(t => t.id === activeTimerTaskId);
+        if (task) {
+          updateTask(activeTimerTaskId, { pomodoroCompleted: (task.pomodoroCompleted || 0) + 1 });
+        }
+      }
+      
       setActiveTimerTaskId(null);
     }
     return () => clearInterval(interval);
-  }, [isTimerRunning, timeLeft]);
+  }, [isTimerRunning, timeLeft, activeTimerTaskId, tasks, updateTask]);
 
   // دالة تشغيل أو إيقاف التايمر مؤقتاً
-  const toggleTimer = (taskId) => {
+  const toggleTimer = async (taskId) => {
     if (activeTimerTaskId === taskId) {
       setIsTimerRunning(!isTimerRunning);
     } else {
-      // لو مفيش تايمر شغال، ابدأ فوراً بالوقت الحالي المظبوط
       setActiveTimerTaskId(taskId);
       setIsTimerRunning(true);
+
+      try {
+        const result = await useTaskStore.getState().startPomodoroSession({
+          mode: 'focus',
+          duration: timeLeft,
+          isDeepSession
+        });
+        if (result.success && result.data) {
+          activeTimerSessionIdRef.current = result.data._id;
+        }
+      } catch (err) {
+        console.error("Failed to start pomodoro session on backend", err);
+      }
     }
   };
 
@@ -281,32 +315,32 @@ function Dashboard() {
   }, [totalPages, currentPage]);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 p-2 text-slate-300 antialiased font-sans">
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 p-2 text-sub antialiased font-sans">
       
       {/* القسم العلوي: الهيدر والأزرار */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
-              <p className="mt-1 text-sm text-slate-400">Welcome back, {userName || 'Kamal'}. Your deep work streak is at {userStats.streakDays} days.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-ink">Dashboard</h1>
+              <p className="mt-1 text-sm text-muted">Welcome back, {userName || 'Kamal'}. Your deep work streak is at {userStats.streakDays} days.</p>
             </div>
           <div className="flex items-center gap-3 relative self-start sm:self-center">
             <div className="relative">
               <button 
                 onClick={() => setShowTimeDropdown(!showTimeDropdown)} 
-                className="inline-flex items-center gap-2 rounded-xl bg-white/5 backdrop-blur-md px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition border border-white/10"
+                className="inline-flex items-center gap-2 rounded-xl bg-hair backdrop-blur-md px-4 py-2.5 text-xs font-semibold text-sub hover:bg-hair transition border border-hair"
               >
-                <FaCalendarAlt className="text-slate-400" />
+                <FaCalendarAlt className="text-muted" />
                 {timeRange}
               </button>
               
               {showTimeDropdown && (
-                <div className="absolute right-0 mt-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl py-1 w-32 shadow-xl z-50 text-xs">
+                <div className="absolute right-0 mt-2 bg-hair backdrop-blur-md border border-hair rounded-xl py-1 w-32 shadow-xl z-50 text-xs">
                   {['Today', 'This Week', 'All Time'].map((option) => (
                     <button 
                       key={option}
                       onClick={() => { setTimeRange(option); setShowTimeDropdown(false); }}
-                      className="w-full text-left px-3 py-2 hover:bg-white/5 text-slate-300"
+                      className="w-full text-left px-3 py-2 hover:bg-hair text-sub"
                     >
                       {option}
                     </button>
@@ -327,44 +361,44 @@ function Dashboard() {
 
         {/* كروت المستوى والـ AI */}
         <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
-          <div className="relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/10">
+          <div className="relative overflow-hidden rounded-3xl bg-hair backdrop-blur-xl p-6 border border-hair">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Current Standing</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">Current Standing</p>
                 <div className="mt-4 flex items-baseline gap-2">
-                  <span className="text-5xl font-black tracking-tight text-white">Level {userStats.currentLevel}</span>
+                  <span className="text-5xl font-black tracking-tight text-ink">Level {userStats.currentLevel}</span>
                   <span className="text-sm font-semibold text-purple-400">+{userStats.totalEarnedXp} XP</span>
                 </div>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.03] border border-white/[0.08] text-purple-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-hair border border-hair text-purple-400">
                 <FaTrophy size={16} />
               </div>
             </div>
 
             <div className="mt-8">
-              <div className="flex justify-between text-xs font-medium text-slate-400">
+              <div className="flex justify-between text-xs font-medium text-muted">
                 <span>Mastery Progress</span>
-                <span className="text-slate-300">{userStats.xpInCurrentLevel} / 1,000 XP</span>
+                <span className="text-sub">{userStats.xpInCurrentLevel} / 1,000 XP</span>
               </div>
-              <div className="mt-2.5 h-2 w-full rounded-full bg-white/[0.06]">
+              <div className="mt-2.5 h-2 w-full rounded-full bg-hair">
                 <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" style={{ width: `${userStats.xpProgressPercentage}%` }} />
               </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-white/[0.04] pt-5">
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Rank</p><p className="mt-1 text-lg font-bold text-white">{userStats.rankLabel}</p></div>
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Weekly Streak</p><p className="mt-1 text-lg font-bold text-white">{userStats.streakDays} Days</p></div>
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Global Top</p><p className="mt-1 text-lg font-bold text-purple-400">{userStats.globalTopPercentage}%</p></div>
+            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-hair pt-5">
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Rank</p><p className="mt-1 text-lg font-bold text-ink">{userStats.rankLabel}</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Weekly Streak</p><p className="mt-1 text-lg font-bold text-ink">{userStats.streakDays} Days</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Global Top</p><p className="mt-1 text-lg font-bold text-purple-400">{userStats.globalTopPercentage}%</p></div>
             </div>
           </div>
 
-          <div className="flex flex-col justify-between rounded-3xl bg-white/5 backdrop-blur-xl p-6 text-center border border-white/10">
+          <div className="flex flex-col justify-between rounded-3xl bg-hair backdrop-blur-xl p-6 text-center border border-hair">
             <div className="flex flex-col items-center pt-2">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-950/40 border border-purple-500/20 text-purple-400"><FaRobot className="text-2xl" /></div>
-              <h3 className="text-lg font-bold text-white tracking-wide">Task Flow AI</h3>
-              <p className="mt-2 px-4 text-xs leading-relaxed text-slate-400">Get automated schedule management, real-time insights, and personalized work advice.</p>
+              <h3 className="text-lg font-bold text-ink tracking-wide">Task Flow AI</h3>
+              <p className="mt-2 px-4 text-xs leading-relaxed text-muted">Get automated schedule management, real-time insights, and personalized work advice.</p>
             </div>
-            <button onClick={() => navigate('/app/chatbot')} className="mt-6 w-full rounded-xl bg-white/[0.04] border border-white/[0.08] py-2.5 text-xs font-semibold text-white transition hover:bg-white/[0.08]">Try Now</button>
+            <button onClick={() => navigate('/app/chatbot')} className="mt-6 w-full rounded-xl bg-hair border border-hair py-2.5 text-xs font-semibold text-ink transition hover:bg-hair">Try Now</button>
           </div>
         </div>
       </div>
@@ -373,16 +407,16 @@ function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         
         {/* 1. كارت HOURS FOCUSED */}
-        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex flex-col justify-between h-[170px]">
+        <div className="rounded-3xl bg-hair backdrop-blur-xl p-5 border border-hair flex flex-col justify-between h-[170px]">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Hours Focused</p>
-            <span className="text-[10px] bg-white/5 border border-white/10 text-purple-400 rounded-md px-1.5 py-0.5 inline-flex items-center gap-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Hours Focused</p>
+            <span className="text-[10px] bg-hair border border-hair text-purple-400 rounded-md px-1.5 py-0.5 inline-flex items-center gap-1">
               <FaChartLine className="text-[9px]" /> {focusMetrics.percentageChange}%
             </span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-4xl font-bold text-white tracking-tight">{formatHours((gamificationStats?.focusMinutes || 0))}</span>
-            <span className="text-xs text-slate-500">this week</span>
+            <span className="text-4xl font-bold text-ink tracking-tight">{formatHours((gamificationStats?.focusMinutes || 0))}</span>
+            <span className="text-xs text-muted">this week</span>
           </div>
           <div className="h-10 w-full mt-2 opacity-50">
             <ResponsiveContainer width="100%" height="100%">
@@ -396,35 +430,35 @@ function Dashboard() {
         {/* 2. كارت DEEP SESSIONS */}
         <div 
           onClick={() => navigate('/app/pomodoro', { state: { openDeepSession: true } })}
-          className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex flex-col justify-between h-[170px] cursor-pointer hover:border-purple-500/30 transition-all duration-300 hover:bg-white/[0.07] group"
+          className="rounded-3xl bg-hair backdrop-blur-xl p-5 border border-hair flex flex-col justify-between h-[170px] cursor-pointer hover:border-purple-500/30 transition-all duration-300 hover:bg-hair group"
         >
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Deep Sessions</p>
-            <FaChevronRight className="text-xs text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all duration-300" />
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Deep Sessions</p>
+            <FaChevronRight className="text-xs text-muted group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all duration-300" />
           </div>
           <div className="my-auto">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-4xl font-bold text-white tracking-tight">
+              <span className="text-4xl font-bold text-ink tracking-tight">
                 {gamificationStats?.deepSessions ?? 0}
               </span>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">
+              <span className="text-[10px] text-muted font-bold uppercase tracking-wider ml-1">
                 sessions
               </span>
             </div>
           </div>
           <div className="w-full">
-            <div className="h-1.5 w-full rounded-full bg-white/[0.06]">
+            <div className="h-1.5 w-full rounded-full bg-hair">
               <div 
                 className={`h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 transition-all duration-500 ${isDeepSession ? 'animate-pulse' : ''}`} 
                 style={{ width: isDeepSession ? '100%' : '0%' }} 
               />
             </div>
-            <div className="flex justify-between items-center text-[9px] text-slate-500 mt-2 font-medium">
+            <div className="flex justify-between items-center text-[9px] text-muted mt-2 font-medium">
               <span className="flex items-center gap-1.5">
                 <span className={`h-1.5 w-1.5 rounded-full ${isDeepSession ? 'bg-purple-400 animate-ping' : 'bg-slate-600'}`} />
                 Deep Session Mode
               </span>
-              <span className={`${isDeepSession ? 'text-purple-400 font-bold' : 'text-slate-500 font-bold'}`}>
+              <span className={`${isDeepSession ? 'text-purple-400 font-bold' : 'text-muted font-bold'}`}>
                 {isDeepSession ? 'ACTIVE' : 'INACTIVE'}
               </span>
             </div>
@@ -432,7 +466,7 @@ function Dashboard() {
         </div>
 
         {/* 3. كارت FLOW EFFICIENCY */}
-        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex items-center justify-between h-[170px]">
+        <div className="rounded-3xl bg-hair backdrop-blur-xl p-5 border border-hair flex items-center justify-between h-[170px]">
           <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -442,16 +476,16 @@ function Dashboard() {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <span className="absolute text-xs font-black text-white">92%</span>
+            <span className="absolute text-xs font-black text-ink">92%</span>
           </div>
           
           <div className="flex flex-col justify-center flex-1 pl-5 space-y-1">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Flow Efficiency</p>
-              <FaInfoCircle className="text-[10px] text-slate-600" />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Flow Efficiency</p>
+              <FaInfoCircle className="text-[10px] text-faint" />
             </div>
-            <h4 className="text-xs font-bold text-white pt-1 tracking-wide">Peak focus at 11:00 AM</h4>
-            <p className="text-[10px] text-slate-500 leading-normal">Optimal environment: Dark Theme</p>
+            <h4 className="text-xs font-bold text-ink pt-1 tracking-wide">Peak focus at 11:00 AM</h4>
+            <p className="text-[10px] text-muted leading-normal">Optimal environment: Dark Theme</p>
           </div>
         </div>
 
@@ -462,9 +496,9 @@ function Dashboard() {
       <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr] items-start">
         
         {/* قائمة المهمات النشطة */}
-        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/10">
-          <div className="flex items-center justify-between border-b border-white/[0.04] pb-4">
-            <h2 className="text-base font-bold text-white tracking-wide">Active Flow Tasks</h2>
+        <div className="rounded-3xl bg-hair backdrop-blur-xl p-6 border border-hair">
+          <div className="flex items-center justify-between border-b border-hair pb-4">
+            <h2 className="text-base font-bold text-ink tracking-wide">Active Flow Tasks</h2>
             <button className="text-xs font-semibold text-purple-400 hover:underline flex items-center gap-1">
               View All <FaChevronRight size={8} />
             </button>
@@ -476,7 +510,7 @@ function Dashboard() {
               const isExpanded = expandedTaskId === task.id;
               
               return (
-                <div key={task.id} className="flex flex-col rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden transition-all">
+                <div key={task.id} className="flex flex-col rounded-2xl bg-hair backdrop-blur-md border border-hair overflow-hidden transition-all">
                   
                   {/* السطر الأساسي للتاسك */}
                   <div className={`flex items-center justify-between p-3 ${task.completed ? 'opacity-40' : ''}`}>
@@ -485,10 +519,10 @@ function Dashboard() {
                         type="checkbox" 
                         checked={task.completed} 
                         onChange={() => useTaskStore.getState().toggleTask(task.id)}
-                        className="mt-1 h-4 w-4 rounded-md border-white/20 bg-transparent text-purple-600 focus:ring-0 cursor-pointer" 
+                        className="mt-1 h-4 w-4 rounded-md border-hair bg-transparent text-purple-600 focus:ring-0 cursor-pointer" 
                       />
                       <div>
-                        <p className={`text-sm font-medium ${task.completed ? 'text-slate-400 line-through' : 'text-white'}`}>{task.title}</p>
+                        <p className={`text-sm font-medium ${task.completed ? 'text-muted line-through' : 'text-ink'}`}>{task.title}</p>
                         <div className="mt-2 flex items-center gap-3">
                           <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${task.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : 'bg-blue-500/10 text-blue-400'}`}>
                             {task.priority} Priority
@@ -502,18 +536,18 @@ function Dashboard() {
                       {!task.completed && (
                         <button 
                           onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
-                          className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 bg-white/[0.02] border transition text-xs font-mono font-bold ${isCurrentTimer && isTimerRunning ? 'border-purple-500/40 text-purple-400 animate-pulse' : 'border-white/[0.05] text-slate-400 hover:bg-white/5'}`}
+                          className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 bg-hair border transition text-xs font-mono font-bold ${isCurrentTimer && isTimerRunning ? 'border-purple-500/40 text-purple-400 animate-pulse' : 'border-hair text-muted hover:bg-hair'}`}
                         >
                           <FaClock size={11} className={isCurrentTimer && isTimerRunning ? 'animate-spin' : ''} />
                           {isCurrentTimer ? formatTime(timeLeft) : "Set Timer"}
                         </button>
                       )}
 
-                      <div className="flex items-center gap-1 border-l border-white/[0.05] pl-2">
-                        <button onClick={() => openEditModal(task)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-purple-400 transition">
+                      <div className="flex items-center gap-1 border-l border-hair pl-2">
+                        <button onClick={() => openEditModal(task)} className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:bg-hair hover:text-purple-400 transition">
                           <FaEdit size={12} />
                         </button>
-                        <button onClick={() => deleteTask(task.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition">
+                        <button onClick={() => deleteTask(task.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:bg-red-500/10 hover:text-red-400 transition">
                           <FaTrash size={11} />
                         </button>
                       </div>
@@ -527,7 +561,7 @@ function Dashboard() {
                         initial={{ height: 0, opacity: 0 }} 
                         animate={{ height: 'auto', opacity: 1 }} 
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-black/20 border-t border-white/[0.03] px-4 py-2.5 space-y-2.5"
+                        className="bg-black/20 border-t border-hair px-4 py-2.5 space-y-2.5"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           {/* أزرار الأرقام الثابتة */}
@@ -537,7 +571,7 @@ function Dashboard() {
                                 key={mins}
                                 disabled={isTimerRunning}
                                 onClick={() => setTaskDuration(mins)}
-                                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition ${isTimerRunning ? 'opacity-30 cursor-not-allowed border-white/5 bg-transparent text-slate-600' : 'border-white/5 bg-white/[0.02] text-slate-400 hover:border-purple-500/30 hover:text-white'}`}
+                                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition ${isTimerRunning ? 'opacity-30 cursor-not-allowed border-hair bg-transparent text-faint' : 'border-hair bg-hair text-muted hover:border-purple-500/30 hover:text-ink'}`}
                               >
                                 {mins}m
                               </button>
@@ -552,12 +586,12 @@ function Dashboard() {
                               value={customMinutes}
                               onChange={(e) => setCustomMinutes(e.target.value)}
                               placeholder="Min"
-                              className="w-12 text-center bg-white/[0.02] border border-white/10 rounded-lg py-0.5 text-xs text-white outline-none focus:border-purple-500/40 disabled:opacity-40"
+                              className="w-12 text-center bg-hair border border-hair rounded-lg py-0.5 text-xs text-ink outline-none focus:border-purple-500/40 disabled:opacity-40"
                             />
                             <button
                               disabled={isTimerRunning}
                               onClick={() => setTaskDuration(customMinutes)}
-                              className="px-2 py-1 text-[10px] font-bold bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg transition disabled:opacity-30"
+                              className="px-2 py-1 text-[10px] font-bold bg-hair hover:bg-hair text-sub rounded-lg transition disabled:opacity-30"
                             >
                               Apply
                             </button>
@@ -565,7 +599,7 @@ function Dashboard() {
 
                           {/* أزرار التحكم الفورية (Play / Pause / Stop) */}
                           <div className="flex items-center gap-2 ml-auto">
-                            <span className="text-sm font-mono font-bold text-white mr-1">
+                            <span className="text-sm font-mono font-bold text-ink mr-1">
                               {isCurrentTimer ? formatTime(timeLeft) : "Ready"}
                             </span>
                             <button
@@ -606,22 +640,22 @@ function Dashboard() {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between border-t border-white/[0.04] pt-4">
-              <div className="text-xs font-semibold text-slate-400">
+            <div className="mt-4 flex items-center justify-between border-t border-hair pt-4">
+              <div className="text-xs font-semibold text-muted">
                 Page {currentPage} of {totalPages}
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-white/[0.05] bg-white/[0.02] text-slate-300 hover:bg-white/[0.05] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-hair bg-hair text-sub hover:bg-hair disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   ← Previous
                 </button>
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-white/[0.05] bg-white/[0.02] text-slate-300 hover:bg-white/[0.05] disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-hair bg-hair text-sub hover:bg-hair disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   Next →
                 </button>
@@ -631,11 +665,11 @@ function Dashboard() {
         </div>
 
         {/* كارد FOCUS INTENSITY */}
-        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-6 border border-white/10 flex flex-col justify-between">
+        <div className="rounded-3xl bg-hair backdrop-blur-xl p-6 border border-hair flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Focus Intensity</h3>
-              <div className="flex items-center gap-2 text-slate-500 text-xs">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted">Focus Intensity</h3>
+              <div className="flex items-center gap-2 text-muted text-xs">
                 <FaChartLine size={11} />
                 <FaChartBar size={11} />
               </div>
@@ -658,27 +692,27 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-5 space-y-2 text-[11px] border-t border-white/[0.03] pt-4 font-medium">
+          <div className="mt-5 space-y-2 text-[11px] border-t border-hair pt-4 font-medium">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#a855f7]" />
-                <span className="text-slate-400">Deep Focus</span>
+                <span className="text-muted">Deep Focus</span>
               </div>
-              <span className="font-bold text-white tracking-wide">72%</span>
+              <span className="font-bold text-ink tracking-wide">72%</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#64748b]" />
-                <span className="text-slate-400">Maintenance</span>
+                <span className="text-muted">Maintenance</span>
               </div>
-              <span className="font-bold text-white tracking-wide">18%</span>
+              <span className="font-bold text-ink tracking-wide">18%</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#334155]" />
-                <span className="text-slate-400">Misc</span>
+                <span className="text-muted">Misc</span>
               </div>
-              <span className="font-bold text-white tracking-wide">10%</span>
+              <span className="font-bold text-ink tracking-wide">10%</span>
             </div>
           </div>
         </div>
@@ -689,26 +723,26 @@ function Dashboard() {
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl w-full max-w-xl shadow-2xl relative">
-              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition"><FaTimes /></button>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-hair backdrop-blur-xl border border-hair p-6 rounded-3xl w-full max-w-xl shadow-2xl relative">
+              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-muted hover:text-ink transition"><FaTimes /></button>
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-2.5 w-2.5 rounded-full bg-purple-500 animate-pulse" />
-                <h3 className="text-lg font-bold text-white">{isEditing ? 'Modify Active Task' : 'Launch New Task'}</h3>
+                <h3 className="text-lg font-bold text-ink">{isEditing ? 'Modify Active Task' : 'Launch New Task'}</h3>
               </div>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Task Name</label>
-                  <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="What are you focusing on?" className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-purple-500/50 focus:bg-white/[0.05] transition placeholder:text-slate-600" />
+                  <label className="block text-[10px] uppercase font-bold tracking-wider text-muted mb-2">Task Name</label>
+                  <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="What are you focusing on?" className="w-full bg-hair border border-hair rounded-xl px-4 py-3 text-xs text-ink outline-none focus:border-purple-500/50 focus:bg-hair transition placeholder:text-faint" />
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Set Priority Level</label>
+                  <label className="block text-[10px] uppercase font-bold tracking-wider text-muted mb-2">Set Priority Level</label>
                   <div className="relative">
-                    <select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 text-xs text-slate-200 outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10 appearance-none cursor-pointer tracking-wide font-semibold">
-                      <option value="low" className="bg-[#13131a] text-blue-400">Low Urgency</option>
-                      <option value="medium" className="bg-[#13131a] text-purple-400">Medium Focus</option>
-                      <option value="high" className="bg-[#13131a] text-orange-400">High Priority</option>
+                    <select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="w-full bg-hair backdrop-blur-md border border-hair rounded-2xl px-4 py-3 text-xs text-sub outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10 appearance-none cursor-pointer tracking-wide font-semibold">
+                      <option value="low" className="bg-card text-blue-400">Low Urgency</option>
+                      <option value="medium" className="bg-card text-purple-400">Medium Focus</option>
+                      <option value="high" className="bg-card text-orange-400">High Priority</option>
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 text-[10px]">▼</div>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted text-[10px]">▼</div>
                   </div>
                 </div>
                 <button type="submit" className="w-full mt-2 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 py-3 text-xs font-bold text-white shadow-lg shadow-purple-500/20 transition hover:opacity-95 tracking-wide">

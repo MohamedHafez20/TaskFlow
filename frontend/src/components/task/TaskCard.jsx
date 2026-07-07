@@ -101,7 +101,7 @@ function TaskCard({ task, setEditingTask }) {
       <div
         className={`bg-gradient-to-br ${
           task.completed ? "from-gray-700 to-gray-800" : "from-white/10 to-white/5"
-        } backdrop-blur-xl border border-white/20 rounded-2xl p-5 hover:border-purple-400/50 transition-all`}
+        } backdrop-blur-xl border border-hair rounded-2xl p-5 hover:border-purple-400/50 transition-all`}
       >
         {/* Content Grid */}
         <div className="flex items-start gap-4">
@@ -113,7 +113,7 @@ function TaskCard({ task, setEditingTask }) {
             className={`mt-1 flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
               task.completed
                 ? "bg-green-500 border-green-500"
-                : "border-white/30 hover:border-green-400"
+                : "border-hair hover:border-green-400"
             }`}
           >
             {task.completed && <FaCheck className="text-white text-sm" />}
@@ -125,8 +125,8 @@ function TaskCard({ task, setEditingTask }) {
             <h3
               className={`text-lg font-semibold transition-all ${
                 task.completed
-                  ? "line-through text-gray-500"
-                  : "text-white"
+                  ? "line-through text-muted"
+                  : "text-ink"
               }`}
             >
               {task.title}
@@ -135,14 +135,14 @@ function TaskCard({ task, setEditingTask }) {
             {/* Metadata */}
             <div className="flex flex-wrap gap-3 mt-3 text-sm">
               {/* Category */}
-              <div className="flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full">
+              <div className="flex items-center gap-1 bg-hair px-3 py-1 rounded-full">
                 <FaTag className="text-blue-400 text-xs" />
-                <span className="text-gray-300 capitalize">{task.category || "general"}</span>
+                <span className="text-sub capitalize">{task.category || "general"}</span>
               </div>
 
               {/* Priority */}
               <div
-                className={`flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full`}
+                className={`flex items-center gap-1 bg-hair px-3 py-1 rounded-full`}
               >
                 <FaFire className={priorityTextColors[task.priority] + " text-xs"} />
                 <span className={`capitalize ${priorityTextColors[task.priority]}`}>
@@ -151,7 +151,7 @@ function TaskCard({ task, setEditingTask }) {
               </div>
 
               {/* Estimated Time */}
-              <div className="flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-gray-300">
+              <div className="flex items-center gap-1 bg-hair px-3 py-1 rounded-full text-sub">
                 <FaClock className="text-purple-400 text-xs" />
                 <span>{task.estimatedTime || "1h"}</span>
               </div>
@@ -201,7 +201,7 @@ function TaskCard({ task, setEditingTask }) {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => showToast("Task completed", "info")}
-                className="p-2 rounded-lg bg-gray-500/20 hover:bg-gray-500/40 text-gray-400 transition-all cursor-not-allowed"
+                className="p-2 rounded-lg bg-gray-500/20 hover:bg-gray-500/40 text-muted transition-all cursor-not-allowed"
                 title="Cannot edit completed task"
               >
                 <FaCog className="text-sm" />
@@ -228,13 +228,13 @@ function TaskCard({ task, setEditingTask }) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-4 pt-4 border-t border-white/10"
+              className="mt-4 pt-4 border-t border-hair"
             >
               <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-lg p-4">
                 {/* Time Selection */}
                 {!isRunning && pomodoroTime === selectedTime * 60 && (
                   <div className="mb-4">
-                    <p className="text-gray-300 text-sm mb-3 text-center">Choose duration:</p>
+                    <p className="text-sub text-sm mb-3 text-center">Choose duration:</p>
                     <div className="flex gap-2 justify-center flex-wrap">
                       {pomodoroOptions.map((option) => (
                         <motion.button
@@ -245,7 +245,7 @@ function TaskCard({ task, setEditingTask }) {
                           className={`px-3 py-2 rounded-lg font-semibold transition-all ${
                             selectedTime === option.value
                               ? "bg-orange-500 text-white"
-                              : "bg-white/10 text-gray-300 hover:bg-white/20"
+                              : "bg-hair text-sub hover:bg-hair"
                           }`}
                         >
                           {option.label}
@@ -257,13 +257,13 @@ function TaskCard({ task, setEditingTask }) {
 
                 {/* Timer Display */}
                 <div className="text-center">
-                  <p className="text-gray-300 text-sm mb-2">⏱️ Pomodoro Timer</p>
+                  <p className="text-sub text-sm mb-2">⏱️ Pomodoro Timer</p>
                   <p className="text-3xl font-bold text-orange-300 mb-4">
                     {formatTime(pomodoroTime)}
                   </p>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-white/20 rounded-full h-2 mb-4">
+                  <div className="w-full bg-hair rounded-full h-2 mb-4">
                     <motion.div
                       className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full"
                       initial={{ width: "100%" }}
@@ -310,7 +310,7 @@ function TaskCard({ task, setEditingTask }) {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={resetPomodoro}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-gray-300 rounded-lg font-semibold transition-all flex items-center gap-2"
+                      className="px-4 py-2 bg-hair hover:bg-hair text-sub rounded-lg font-semibold transition-all flex items-center gap-2"
                     >
                       <FaRedo className="text-sm" />
                       Reset

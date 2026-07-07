@@ -2,7 +2,7 @@ import React from 'react';
 
 function BackgroundWrapper() {
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden bg-[#030305]">
+    <div className="fixed inset-0 -z-10 overflow-hidden bg-[var(--c-deep)]">
    
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(139,92,246,0.08),transparent_70%)]" />
 
@@ -20,7 +20,7 @@ function BackgroundWrapper() {
           maskImage: 'radial-gradient(ellipse at 50% 50%, black, transparent 80%)'
         }}
       />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#030305_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,var(--c-deep)_100%)]" />
     </div>
   );
 }

@@ -1,7 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaGamepad, FaTimes, FaPlay, FaPause, FaRedo, FaTrophy, FaStar, FaMedal } from 'react-icons/fa';
+import { FaBullseye, FaClock, FaCrown, FaFire, FaTimes, FaPlay, FaRedo, FaTrophy, FaStar } from 'react-icons/fa';
+import api from '../api/axios';
 import usePageTitle from '../hooks/usePageTitle';
+import { useToast } from '../components/Ui/ToastProvider';
+import useTaskStore from '../store/useTaskStore';
+
+const BADGE_ICONS = {
+  first_task: FaBullseye,
+  ten_tasks: FaFire,
+  focus_streak: FaClock,
+  pomodoro_pro: FaStar,
+  level_5: FaCrown,
+};
 
 const games = [
   {
@@ -66,7 +77,7 @@ const games = [
   }
 ];
 
-function SimpleSnakeGame({ onClose }) {
+function SimpleSnakeGame({ onClose, onAward }) {
   const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
   const [food, setFood] = useState({ x: 15, y: 15 });
   const [direction, setDirection] = useState('RIGHT');
@@ -74,6 +85,7 @@ function SimpleSnakeGame({ onClose }) {
   const [score, setScore] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [highScore, setHighScore] = useState(localStorage.getItem('snakeHighScore') || 0);
+  const rewardAwardedRef = useRef(false);
 
   const gridSize = 18;
 
@@ -133,6 +145,7 @@ function SimpleSnakeGame({ onClose }) {
   };
 
   const startGame = () => {
+    rewardAwardedRef.current = false;
     setIsPlaying(true);
     setGameOver(false);
     setSnake([{ x: 10, y: 10 }]);
@@ -141,6 +154,7 @@ function SimpleSnakeGame({ onClose }) {
   };
 
   const resetGame = () => {
+    rewardAwardedRef.current = false;
     setIsPlaying(false);
     setGameOver(false);
     setSnake([{ x: 10, y: 10 }]);
@@ -153,6 +167,16 @@ function SimpleSnakeGame({ onClose }) {
     const gameInterval = setInterval(moveSnake, 150);
     return () => clearInterval(gameInterval);
   }, [direction, gameOver, isPlaying, food]);
+
+  useEffect(() => {
+    if (!gameOver || rewardAwardedRef.current || score <= 0) return;
+
+    const xpEarned = Math.min(25, Math.floor(score / 10));
+    if (xpEarned > 0) {
+      rewardAwardedRef.current = true;
+      onAward({ gameId: 'snake', score, xpEarned, pointsEarned: 0 });
+    }
+  }, [gameOver, onAward, score]);
 
   // Keyboard controls
   useEffect(() => {
@@ -188,7 +212,7 @@ function SimpleSnakeGame({ onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="bg-gradient-to-br from-slate-900 to-slate-800 border border-white/20 rounded-3xl p-4 md:p-6 max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-br from-card2 to-card border border-hair rounded-3xl p-4 md:p-6 max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         initial={{ y: 50 }}
         animate={{ y: 0 }}
@@ -199,13 +223,13 @@ function SimpleSnakeGame({ onClose }) {
               🐍
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Snake Game</h2>
-              <p className="text-gray-400">Classic arcade action</p>
+              <h2 className="text-3xl font-bold text-ink">Snake Game</h2>
+              <p className="text-muted">Classic arcade action</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-white/70 hover:text-white p-3 hover:bg-white/10 rounded-xl transition-all"
+            className="text-muted hover:text-ink p-3 hover:bg-hair rounded-xl transition-all"
           >
             <FaTimes className="text-xl" />
           </button>
@@ -260,12 +284,12 @@ function SimpleSnakeGame({ onClose }) {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">Score</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">Score</p>
                 <h3 className="text-2xl font-bold text-green-400">{score}</h3>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">High Score</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">High Score</p>
                 <h3 className="text-2xl font-bold text-yellow-400">{highScore}</h3>
               </div>
             </div>
@@ -277,18 +301,18 @@ function SimpleSnakeGame({ onClose }) {
                 className="mt-6 bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-center"
               >
                 <h3 className="text-xl font-bold text-red-400 mb-2">Game Over!</h3>
-                <p className="text-gray-300">Final Score: {score}</p>
+                <p className="text-sub">Final Score: {score}</p>
               </motion.div>
             )}
           </div>
 
           <div className="lg:w-80">
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+            <div className="bg-hair backdrop-blur-sm border border-hair rounded-2xl p-6">
+              <h3 className="text-ink font-bold mb-4 flex items-center gap-2">
                 <FaStar className="text-yellow-400" />
                 How to Play
               </h3>
-              <ul className="text-gray-300 text-sm space-y-3">
+              <ul className="text-sub text-sm space-y-3">
                 <li className="flex items-start gap-2">
                   <span className="text-green-400 mt-1">•</span>
                   Use arrow keys to move the snake
@@ -314,7 +338,7 @@ function SimpleSnakeGame({ onClose }) {
   );
 }
 
-function SimpleMemoryGame({ onClose }) {
+function SimpleMemoryGame({ onClose, onAward }) {
   const [cards, setCards] = useState([]);
   const [flipped, setFlipped] = useState([]);
   const [matched, setMatched] = useState([]);
@@ -322,6 +346,7 @@ function SimpleMemoryGame({ onClose }) {
   const [gameStarted, setGameStarted] = useState(false);
   const [time, setTime] = useState(0);
   const [bestTime, setBestTime] = useState(localStorage.getItem('memoryBestTime') || null);
+  const rewardAwardedRef = useRef(false);
 
   const emojis = ['🎮', '🎯', '🎲', '🎪', '🎨', '🎭', '🎪', '🎯'];
 
@@ -335,6 +360,7 @@ function SimpleMemoryGame({ onClose }) {
     setMoves(0);
     setTime(0);
     setGameStarted(true);
+    rewardAwardedRef.current = false;
   };
 
   const handleCardClick = (cardId) => {
@@ -376,6 +402,18 @@ function SimpleMemoryGame({ onClose }) {
     }
   }, [isGameComplete, time, bestTime]);
 
+  useEffect(() => {
+    if (!isGameComplete || rewardAwardedRef.current) return;
+
+    rewardAwardedRef.current = true;
+    onAward({
+      gameId: 'memory',
+      score: Math.max(0, 100 - moves),
+      xpEarned: 30,
+      pointsEarned: 15,
+    });
+  }, [isGameComplete, moves, onAward]);
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -391,7 +429,7 @@ function SimpleMemoryGame({ onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="bg-gradient-to-br from-slate-900 to-slate-800 border border-white/20 rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-br from-card2 to-card border border-hair rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         initial={{ y: 50 }}
         animate={{ y: 0 }}
@@ -402,13 +440,13 @@ function SimpleMemoryGame({ onClose }) {
               🧠
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Memory Game</h2>
-              <p className="text-gray-400">Match all pairs</p>
+              <h2 className="text-3xl font-bold text-ink">Memory Game</h2>
+              <p className="text-muted">Match all pairs</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-white/70 hover:text-white p-3 hover:bg-white/10 rounded-xl transition-all"
+            className="text-muted hover:text-ink p-3 hover:bg-hair rounded-xl transition-all"
           >
             <FaTimes className="text-xl" />
           </button>
@@ -434,16 +472,16 @@ function SimpleMemoryGame({ onClose }) {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-            <p className="text-gray-400 text-sm mb-1">Moves</p>
+          <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+            <p className="text-muted text-sm mb-1">Moves</p>
             <h3 className="text-2xl font-bold text-blue-400">{moves}</h3>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-            <p className="text-gray-400 text-sm mb-1">Time</p>
+          <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+            <p className="text-muted text-sm mb-1">Time</p>
             <h3 className="text-2xl font-bold text-green-400">{formatTime(time)}</h3>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-            <p className="text-gray-400 text-sm mb-1">Best Time</p>
+          <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+            <p className="text-muted text-sm mb-1">Best Time</p>
             <h3 className="text-2xl font-bold text-yellow-400">{bestTime ? formatTime(bestTime) : '--'}</h3>
           </div>
         </div>
@@ -458,7 +496,7 @@ function SimpleMemoryGame({ onClose }) {
               <FaTrophy className="text-yellow-400 text-2xl" />
               <h3 className="text-2xl font-bold text-green-400">Congratulations!</h3>
             </div>
-            <p className="text-gray-300">Completed in {moves} moves and {formatTime(time)}</p>
+            <p className="text-sub">Completed in {moves} moves and {formatTime(time)}</p>
             {bestTime === time && <p className="text-yellow-400 font-semibold mt-2">New Best Time! 🏆</p>}
           </motion.div>
         )}
@@ -491,13 +529,14 @@ function SimpleMemoryGame({ onClose }) {
   );
 }
 
-function WordleGame({ onClose }) {
+function WordleGame({ onClose, onAward }) {
   const [word, setWord] = useState('');
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const rewardAwardedRef = useRef(false);
 
   const words = ['REACT', 'GAMES', 'CODER', 'SMART', 'TASKS', 'BUILD', 'LEARN', 'FUNNY', 'QUICK', 'BRAVE'];
 
@@ -510,12 +549,22 @@ function WordleGame({ onClose }) {
 
     if (key === 'ENTER' && currentGuess.length === 5) {
       const newGuesses = [...guesses, currentGuess];
+      const nextAttempts = attempts + 1;
       setGuesses(newGuesses);
-      setAttempts(prev => prev + 1);
+      setAttempts(nextAttempts);
 
       if (currentGuess === word) {
         setWon(true);
         setGameOver(true);
+        if (!rewardAwardedRef.current) {
+          rewardAwardedRef.current = true;
+          onAward({
+            gameId: 'wordle',
+            score: Math.max(0, 7 - nextAttempts) * 10,
+            xpEarned: 40,
+            pointsEarned: 20,
+          });
+        }
       } else if (newGuesses.length >= 6) {
         setGameOver(true);
       }
@@ -535,6 +584,7 @@ function WordleGame({ onClose }) {
   };
 
   const resetGame = () => {
+    rewardAwardedRef.current = false;
     setWord(words[Math.floor(Math.random() * words.length)]);
     setGuesses([]);
     setCurrentGuess('');
@@ -552,7 +602,7 @@ function WordleGame({ onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="bg-gradient-to-br from-slate-900 to-slate-800 border border-white/20 rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-br from-card2 to-card border border-hair rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         initial={{ y: 50 }}
         animate={{ y: 0 }}
@@ -563,13 +613,13 @@ function WordleGame({ onClose }) {
               📝
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Wordle Clone</h2>
-              <p className="text-gray-400">Guess the 5-letter word</p>
+              <h2 className="text-3xl font-bold text-ink">Wordle Clone</h2>
+              <p className="text-muted">Guess the 5-letter word</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-white/70 hover:text-white p-3 hover:bg-white/10 rounded-xl transition-all"
+            className="text-muted hover:text-ink p-3 hover:bg-hair rounded-xl transition-all"
           >
             <FaTimes className="text-xl" />
           </button>
@@ -590,7 +640,7 @@ function WordleGame({ onClose }) {
                       status === 'correct' ? 'bg-green-500 border-green-500 text-white' :
                       status === 'present' ? 'bg-yellow-500 border-yellow-500 text-white' :
                       status === 'absent' ? 'bg-gray-500 border-gray-500 text-white' :
-                      rowIndex === guesses.length ? 'border-white/50 text-white' : 'border-gray-600'
+                      rowIndex === guesses.length ? 'border-hair text-ink' : 'border-gray-600'
                     }`}
                   >
                     {letter}
@@ -612,7 +662,7 @@ function WordleGame({ onClose }) {
             <h3 className={`text-2xl font-bold mb-2 ${won ? 'text-green-400' : 'text-red-400'}`}>
               {won ? '🎉 Congratulations!' : '😞 Game Over'}
             </h3>
-            <p className="text-gray-300">
+            <p className="text-sub">
               {won ? `You guessed it in ${attempts} attempts!` : `The word was: ${word}`}
             </p>
           </motion.div>
@@ -661,7 +711,7 @@ function WordleGame({ onClose }) {
   );
 }
 
-function MathQuizGame({ onClose }) {
+function MathQuizGame({ onClose, onAward }) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [correctAnswer, setCorrectAnswer] = useState(0);
@@ -670,6 +720,7 @@ function MathQuizGame({ onClose }) {
   const [timeLeft, setTimeLeft] = useState(30);
   const [highScore, setHighScore] = useState(localStorage.getItem('mathHighScore') || 0);
   const [feedback, setFeedback] = useState('');
+  const rewardAwardedRef = useRef(false);
 
   const generateQuestion = () => {
     const operations = ['+', '-', '*'];
@@ -700,6 +751,7 @@ function MathQuizGame({ onClose }) {
   };
 
   const startGame = () => {
+    rewardAwardedRef.current = false;
     setGameActive(true);
     setScore(0);
     setTimeLeft(30);
@@ -733,13 +785,21 @@ function MathQuizGame({ onClose }) {
       timer = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
     } else if (timeLeft === 0) {
       setGameActive(false);
+      if (!rewardAwardedRef.current) {
+        const correctAnswers = Math.floor(score / 10);
+        const xpEarned = Math.min(30, correctAnswers * 5);
+        rewardAwardedRef.current = true;
+        if (xpEarned > 0) {
+          onAward({ gameId: 'math', score, xpEarned, pointsEarned: 0 });
+        }
+      }
       if (score > highScore) {
         setHighScore(score);
         localStorage.setItem('mathHighScore', score);
       }
     }
     return () => clearTimeout(timer);
-  }, [gameActive, timeLeft, score, highScore]);
+  }, [gameActive, highScore, onAward, score, timeLeft]);
 
   return (
     <motion.div
@@ -750,7 +810,7 @@ function MathQuizGame({ onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="bg-gradient-to-br from-slate-900 to-slate-800 border border-white/20 rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-br from-card2 to-card border border-hair rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         initial={{ y: 50 }}
         animate={{ y: 0 }}
@@ -761,13 +821,13 @@ function MathQuizGame({ onClose }) {
               🧮
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Math Quiz</h2>
-              <p className="text-gray-400">Solve as many as you can!</p>
+              <h2 className="text-3xl font-bold text-ink">Math Quiz</h2>
+              <p className="text-muted">Solve as many as you can!</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-white/70 hover:text-white p-3 hover:bg-white/10 rounded-xl transition-all"
+            className="text-muted hover:text-ink p-3 hover:bg-hair rounded-xl transition-all"
           >
             <FaTimes className="text-xl" />
           </button>
@@ -776,14 +836,14 @@ function MathQuizGame({ onClose }) {
         {gameActive ? (
           <>
             <div className="text-center mb-6">
-              <div className="text-6xl font-bold text-white mb-4">{question}</div>
-              <div className="text-2xl font-bold text-cyan-400 mb-4">Time: {timeLeft}s</div>
+              <div className="text-6xl font-bold text-ink mb-4">{question}</div>
+              <div className="text-2xl font-bold text-[var(--c-accent)] mb-4">Time: {timeLeft}s</div>
               <input
                 type="number"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && submitAnswer()}
-                className="w-full text-center text-3xl font-bold bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:border-red-400 focus:outline-none"
+                className="w-full text-center text-3xl font-bold bg-hair border border-hair rounded-xl p-4 text-ink focus:border-red-400 focus:outline-none"
                 placeholder="Your answer..."
                 autoFocus
               />
@@ -799,12 +859,12 @@ function MathQuizGame({ onClose }) {
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">Score</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">Score</p>
                 <p className="text-2xl font-bold text-red-400">{score}</p>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">High Score</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">High Score</p>
                 <p className="text-2xl font-bold text-yellow-400">{highScore}</p>
               </div>
             </div>
@@ -812,16 +872,16 @@ function MathQuizGame({ onClose }) {
         ) : (
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">🧮</div>
-            <p className="text-gray-300 text-lg mb-6">
+            <p className="text-sub text-lg mb-6">
               Solve math problems as fast as you can! You have 30 seconds.
             </p>
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">Last Score</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">Last Score</p>
                 <p className="text-2xl font-bold text-red-400">{score}</p>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">High Score</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">High Score</p>
                 <p className="text-2xl font-bold text-yellow-400">{highScore}</p>
               </div>
             </div>
@@ -856,7 +916,7 @@ function MathQuizGame({ onClose }) {
   );
 }
 
-function TypingSpeedGame({ onClose }) {
+function TypingSpeedGame({ onClose, onAward }) {
   const [text, setText] = useState('');
   const [userInput, setUserInput] = useState('');
   const [startTime, setStartTime] = useState(null);
@@ -865,6 +925,7 @@ function TypingSpeedGame({ onClose }) {
   const [accuracy, setAccuracy] = useState(100);
   const [gameStarted, setGameStarted] = useState(false);
   const [bestWpm, setBestWpm] = useState(localStorage.getItem('typingBestWpm') || 0);
+  const rewardAwardedRef = useRef(false);
 
   const sampleTexts = [
     "The quick brown fox jumps over the lazy dog.",
@@ -883,6 +944,7 @@ function TypingSpeedGame({ onClose }) {
     setWpm(0);
     setAccuracy(100);
     setGameStarted(true);
+    rewardAwardedRef.current = false;
   };
 
   const handleInputChange = (e) => {
@@ -911,6 +973,10 @@ function TypingSpeedGame({ onClose }) {
     if (value.length === text.length) {
       setEndTime(Date.now());
       setGameStarted(false);
+      if (!rewardAwardedRef.current) {
+        rewardAwardedRef.current = true;
+        onAward({ gameId: 'typing', score: currentWpm, xpEarned: 25, pointsEarned: 0 });
+      }
 
       if (currentWpm > bestWpm) {
         setBestWpm(currentWpm);
@@ -923,7 +989,7 @@ function TypingSpeedGame({ onClose }) {
     if (index < userInput.length) {
       return userInput[index] === char ? 'text-green-400' : 'text-red-400 bg-red-500/20';
     }
-    return 'text-gray-400';
+    return 'text-muted';
   };
 
   return (
@@ -935,7 +1001,7 @@ function TypingSpeedGame({ onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="bg-gradient-to-br from-slate-900 to-slate-800 border border-white/20 rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-br from-card2 to-card border border-hair rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         initial={{ y: 50 }}
         animate={{ y: 0 }}
@@ -946,13 +1012,13 @@ function TypingSpeedGame({ onClose }) {
               ⌨️
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Typing Speed</h2>
-              <p className="text-gray-400">Type as fast as you can!</p>
+              <h2 className="text-3xl font-bold text-ink">Typing Speed</h2>
+              <p className="text-muted">Type as fast as you can!</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-white/70 hover:text-white p-3 hover:bg-white/10 rounded-xl transition-all"
+            className="text-muted hover:text-ink p-3 hover:bg-hair rounded-xl transition-all"
           >
             <FaTimes className="text-xl" />
           </button>
@@ -982,22 +1048,22 @@ function TypingSpeedGame({ onClose }) {
             <textarea
               value={userInput}
               onChange={handleInputChange}
-              className="w-full h-32 bg-white/10 border border-white/20 rounded-xl p-4 text-white font-mono text-lg focus:border-indigo-400 focus:outline-none resize-none"
+              className="w-full h-32 bg-hair border border-hair rounded-xl p-4 text-ink font-mono text-lg focus:border-indigo-400 focus:outline-none resize-none"
               placeholder="Start typing here..."
               disabled={!gameStarted && endTime}
             />
 
             <div className="grid grid-cols-3 gap-4 mt-6">
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">WPM</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">WPM</p>
                 <p className="text-3xl font-bold text-indigo-400">{wpm}</p>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">Accuracy</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">Accuracy</p>
                 <p className="text-3xl font-bold text-green-400">{accuracy}%</p>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm mb-1">Best WPM</p>
+              <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+                <p className="text-muted text-sm mb-1">Best WPM</p>
                 <p className="text-3xl font-bold text-yellow-400">{bestWpm}</p>
               </div>
             </div>
@@ -1009,7 +1075,7 @@ function TypingSpeedGame({ onClose }) {
                 className="mt-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-xl p-6 text-center"
               >
                 <h3 className="text-2xl font-bold text-green-400 mb-2">Test Complete!</h3>
-                <p className="text-gray-300">
+                <p className="text-sub">
                   You typed at {wpm} WPM with {accuracy}% accuracy
                   {wpm === bestWpm && wpm > 0 && " - New Personal Best! 🏆"}
                 </p>
@@ -1037,14 +1103,16 @@ function TypingSpeedGame({ onClose }) {
   );
 }
 
-function ReactionTimeGame({ onClose }) {
+function ReactionTimeGame({ onClose, onAward }) {
   const [gameState, setGameState] = useState('waiting'); // waiting, ready, clicked, result
   const [startTime, setStartTime] = useState(0);
   const [reactionTime, setReactionTime] = useState(0);
   const [bestTime, setBestTime] = useState(localStorage.getItem('reactionBestTime') || null);
   const [attempts, setAttempts] = useState(0);
+  const rewardAwardedRef = useRef(false);
 
   const startGame = () => {
+    rewardAwardedRef.current = false;
     setGameState('waiting');
     setReactionTime(0);
     const delay = Math.random() * 3000 + 1000; // 1-4 seconds
@@ -1070,6 +1138,11 @@ function ReactionTimeGame({ onClose }) {
         localStorage.setItem('reactionBestTime', time);
       }
 
+      if (time < 300 && !rewardAwardedRef.current) {
+        rewardAwardedRef.current = true;
+        onAward({ gameId: 'reaction', score: 300 - time, xpEarned: 20, pointsEarned: 0 });
+      }
+
       setGameState('result');
     }
   };
@@ -1088,7 +1161,7 @@ function ReactionTimeGame({ onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="bg-gradient-to-br from-slate-900 to-slate-800 border border-white/20 rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-br from-card2 to-card border border-hair rounded-3xl p-4 md:p-6 w-full max-w-[min(100vw-2rem,900px)] max-h-[min(100vh-2rem,900px)] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         initial={{ y: 50 }}
         animate={{ y: 0 }}
@@ -1099,13 +1172,13 @@ function ReactionTimeGame({ onClose }) {
               ⚡
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Reaction Time</h2>
-              <p className="text-gray-400">Test your reflexes!</p>
+              <h2 className="text-3xl font-bold text-ink">Reaction Time</h2>
+              <p className="text-muted">Test your reflexes!</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-white/70 hover:text-white p-3 hover:bg-white/10 rounded-xl transition-all"
+            className="text-muted hover:text-ink p-3 hover:bg-hair rounded-xl transition-all"
           >
             <FaTimes className="text-xl" />
           </button>
@@ -1118,7 +1191,7 @@ function ReactionTimeGame({ onClose }) {
                 ? 'bg-red-500/20 border-4 border-red-500 text-red-400'
                 : gameState === 'ready'
                 ? 'bg-green-500/20 border-4 border-green-500 text-green-400 animate-pulse'
-                : 'bg-gray-500/20 border-4 border-gray-500 text-gray-400'
+                : 'bg-gray-500/20 border-4 border-gray-500 text-muted'
             }`}
             onClick={handleClick}
             whileHover={{ scale: gameState === 'ready' ? 1.02 : 1 }}
@@ -1137,12 +1210,12 @@ function ReactionTimeGame({ onClose }) {
             animate={{ opacity: 1, scale: 1 }}
             className="grid grid-cols-2 gap-4 mb-6"
           >
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-              <p className="text-gray-400 text-sm mb-1">Your Time</p>
-              <p className="text-2xl font-bold text-cyan-400">{reactionTime}ms</p>
+            <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+              <p className="text-muted text-sm mb-1">Your Time</p>
+              <p className="text-2xl font-bold text-[var(--c-accent)]">{reactionTime}ms</p>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-              <p className="text-gray-400 text-sm mb-1">Best Time</p>
+            <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
+              <p className="text-muted text-sm mb-1">Best Time</p>
               <p className="text-2xl font-bold text-yellow-400">{bestTime ? `${bestTime}ms` : '--'}</p>
             </div>
           </motion.div>
@@ -1172,8 +1245,52 @@ function GamesPage() {
 
   const [selectedGame, setSelectedGame] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const { showToast } = useToast();
+  const gamificationStats = useTaskStore((s) => s.gamificationStats);
+  const fetchGamificationStats = useTaskStore((s) => s.fetchGamificationStats);
+  const awardGameScore = useTaskStore((s) => s.awardGameScore);
 
   const filteredGames = filter === 'all' ? games : games.filter(game => game.category.toLowerCase() === filter);
+  const xpInLevel = gamificationStats?.xpInCurrentLevel ?? 0;
+  const xpToNext = gamificationStats?.xpToNextLevel ?? 1000;
+  const xpTotal = xpInLevel + xpToNext;
+  const xpPercent = xpTotal > 0 ? Math.min(100, Math.round((xpInLevel / xpTotal) * 100)) : 0;
+
+  const fetchLeaderboard = useCallback(async () => {
+    setLeaderboardLoading(true);
+    try {
+      const { data } = await api.get('/gamification/leaderboard');
+      setLeaderboard(data);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to load leaderboard', 'error');
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    fetchGamificationStats();
+    fetchLeaderboard();
+  }, [fetchGamificationStats, fetchLeaderboard]);
+
+  const handleAward = useCallback(async ({ gameId, score, xpEarned, pointsEarned }) => {
+    if (xpEarned <= 0 && pointsEarned <= 0) return;
+
+    const result = await awardGameScore({ gameId, score, xpEarned, pointsEarned });
+    if (result.success) {
+      const rewardText = [
+        xpEarned > 0 ? `${xpEarned} XP` : null,
+        pointsEarned > 0 ? `${pointsEarned} points` : null,
+      ].filter(Boolean).join(' and ');
+
+      showToast(`Game reward earned: ${rewardText}`, 'success');
+      fetchLeaderboard();
+    } else {
+      showToast(result.message, 'error');
+    }
+  }, [awardGameScore, fetchLeaderboard, showToast]);
 
   const openGame = (gameId) => {
     setSelectedGame(gameId);
@@ -1187,22 +1304,93 @@ function GamesPage() {
 
   return (
     <div className="bg-transparent p-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8"
+          className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl md:text-5xl font-bold text-ink mb-3">
             🎮 Game Center
           </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-lg text-sub">
             Challenge yourself with our collection of fun and engaging games!
           </p>
+          <div className="rounded-2xl border border-hair bg-hair px-5 py-4 text-right backdrop-blur-xl">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted">Total Points</p>
+            <p className="text-3xl font-bold text-yellow-300">{gamificationStats?.points ?? 0}</p>
+          </div>
         </motion.div>
 
-        <motion.div
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6">
+          <main className="space-y-6">
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="rounded-2xl border border-hair bg-hair p-5 backdrop-blur-xl"
+            >
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm text-muted">Current Level</p>
+                  <h2 className="text-3xl font-bold text-ink">
+                    Level {gamificationStats?.level ?? 1}
+                    <span className="ml-3 text-lg text-[var(--c-accent)]">{gamificationStats?.levelName ?? 'Beginner'}</span>
+                  </h2>
+                </div>
+                <div className="text-left md:text-right">
+                  <p className="text-sm text-muted">{xpInLevel} XP this level</p>
+                  <p className="text-sm text-sub">{xpToNext} XP to next level</p>
+                </div>
+              </div>
+              <div className="mt-5 h-3 overflow-hidden rounded-full bg-black/30">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${xpPercent}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-emerald-400 to-yellow-300"
+                />
+              </div>
+            </motion.section>
+
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="rounded-2xl border border-hair bg-hair p-5 backdrop-blur-xl"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-ink">Badges</h2>
+                <span className="text-sm text-muted">{gamificationStats?.badges?.length ?? 0} unlocked</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+                {(gamificationStats?.allBadges ?? []).map((badge) => {
+                  const earned = badge.earned || gamificationStats?.badges?.includes(badge.id);
+                  const BadgeIcon = BADGE_ICONS[badge.id] || FaStar;
+
+                  return (
+                    <div
+                      key={badge.id}
+                      className={`rounded-2xl border p-4 text-center transition-all ${
+                        earned
+                          ? 'border-yellow-300/40 bg-yellow-300/10 text-white'
+                          : 'border-hair bg-black/20 text-muted'
+                      }`}
+                    >
+                      <BadgeIcon className="mx-auto mb-3 text-2xl" />
+                      <p className="text-sm font-semibold">{badge.label || badge.name}</p>
+                      <p className="mt-1 text-xs text-muted">{badge.points} pts</p>
+                    </div>
+                  );
+                })}
+                {!gamificationStats?.allBadges?.length && (
+                  <p className="col-span-full text-sm text-muted">Badges will appear after stats load.</p>
+                )}
+              </div>
+            </motion.section>
+
+            <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -1216,7 +1404,7 @@ function GamesPage() {
                 className={`px-6 py-2 rounded-full font-medium transition-all ${
                   filter === category
                     ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    : 'bg-hair text-sub hover:bg-hair'
                 }`}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -1238,23 +1426,61 @@ function GamesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               whileHover={{ scale: 1.05 }}
-              className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20 hover:border-blue-400/40 transition-all cursor-pointer shadow-xl"
+              className="bg-hair backdrop-blur-xl rounded-3xl p-6 border border-hair hover:border-blue-400/40 transition-all cursor-pointer shadow-xl"
               onClick={() => openGame(game.id)}
             >
               <div className="text-4xl mb-4">{game.icon}</div>
-              <h3 className="text-xl font-bold text-white mb-2">{game.title}</h3>
-              <p className="text-gray-300 mb-4">{game.description}</p>
+              <h3 className="text-xl font-bold text-ink mb-2">{game.title}</h3>
+              <p className="text-sub mb-4">{game.description}</p>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-purple-300 bg-purple-500/20 px-3 py-1 rounded-full">
                   {game.category}
                 </span>
-                <span className="text-sm text-gray-400">
+                <span className="text-sm text-muted">
                   {game.difficulty}
                 </span>
               </div>
             </motion.div>
           ))}
         </motion.div>
+
+          </main>
+
+          <motion.aside
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="h-fit rounded-2xl border border-hair bg-hair p-5 backdrop-blur-xl"
+          >
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-ink">Leaderboard</h2>
+              <FaTrophy className="text-yellow-300" />
+            </div>
+            <div className="space-y-3">
+              {leaderboardLoading && <p className="text-sm text-muted">Loading standings...</p>}
+              {!leaderboardLoading && leaderboard.map((user, index) => (
+                <div key={user._id} className="flex items-center gap-3 rounded-xl bg-black/20 p-3">
+                  <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                    index === 0 ? 'bg-yellow-300 text-slate-950' :
+                    index === 1 ? 'bg-slate-300 text-slate-950' :
+                    index === 2 ? 'bg-amber-600 text-white' :
+                    'bg-hair text-sub'
+                  }`}>
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
+                    <p className="text-xs text-muted">Level {user.level}</p>
+                  </div>
+                  <p className="text-sm font-bold text-yellow-300">{user.points}</p>
+                </div>
+              ))}
+              {!leaderboardLoading && leaderboard.length === 0 && (
+                <p className="text-sm text-muted">No players on the board yet.</p>
+              )}
+            </div>
+          </motion.aside>
+        </div>
 
         <AnimatePresence>
           {selectedGame && (
@@ -1269,15 +1495,15 @@ function GamesPage() {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-slate-800 rounded-2xl w-full max-w-[min(100vw-2rem,1024px)] max-h-[90vh] overflow-y-auto shadow-2xl"
+                className="bg-card2 rounded-2xl w-full max-w-[min(100vw-2rem,1024px)] max-h-[90vh] overflow-y-auto shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                {selectedGame === 'snake' && <SimpleSnakeGame onClose={closeGame} />}
-                {selectedGame === 'memory' && <SimpleMemoryGame onClose={closeGame} />}
-                {selectedGame === 'wordle' && <WordleGame onClose={closeGame} />}
-                {selectedGame === 'math' && <MathQuizGame onClose={closeGame} />}
-                {selectedGame === 'typing' && <TypingSpeedGame onClose={closeGame} />}
-                {selectedGame === 'reaction' && <ReactionTimeGame onClose={closeGame} />}
+                {selectedGame === 'snake' && <SimpleSnakeGame onClose={closeGame} onAward={handleAward} />}
+                {selectedGame === 'memory' && <SimpleMemoryGame onClose={closeGame} onAward={handleAward} />}
+                {selectedGame === 'wordle' && <WordleGame onClose={closeGame} onAward={handleAward} />}
+                {selectedGame === 'math' && <MathQuizGame onClose={closeGame} onAward={handleAward} />}
+                {selectedGame === 'typing' && <TypingSpeedGame onClose={closeGame} onAward={handleAward} />}
+                {selectedGame === 'reaction' && <ReactionTimeGame onClose={closeGame} onAward={handleAward} />}
               </motion.div>
             </motion.div>
           )}

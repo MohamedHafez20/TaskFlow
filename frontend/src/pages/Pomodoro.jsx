@@ -370,13 +370,13 @@ function Pomodoro() {
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="grid gap-8 xl:grid-cols-[1.5fr_0.9fr] p-2 antialiased font-sans text-slate-300"
+      className="grid gap-8 xl:grid-cols-[1.5fr_0.9fr] p-2 antialiased font-sans text-sub"
     >
       <div className="flex flex-col items-center justify-between min-h-[620px] py-4">
         
         {/* Timer mode selector */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-1 bg-white/5 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-inner">
+          <div className="inline-flex items-center gap-1 bg-hair backdrop-blur-md border border-hair p-1.5 rounded-full shadow-inner">
             {timerModes.map((item) => (
               <button
                 key={item.key}
@@ -402,7 +402,7 @@ function Pomodoro() {
                 className={`rounded-full px-5 py-2 text-xs font-bold tracking-wide transition-all duration-300 ${
                   mode === item.key 
                     ? 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white shadow-md' 
-                    : 'text-slate-500 hover:text-slate-300 bg-transparent'
+                    : 'text-muted hover:text-sub bg-transparent'
                 } ${isAwaitingTaskDecision ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {item.label}
@@ -430,14 +430,14 @@ function Pomodoro() {
           </svg>
           
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-            <span className="text-[5.5rem] font-bold tracking-tight text-white font-mono leading-none select-none">
+            <span className="text-[5.5rem] font-bold tracking-tight text-ink font-mono leading-none select-none">
               {timerLabel}
             </span>
-            <span className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-500 mt-2">
+            <span className="text-[10px] uppercase tracking-[0.3em] font-black text-muted mt-2">
               {modeLabel}
             </span>
             {currentTask && (
-              <span className="text-[11px] text-slate-400 mt-2 max-w-[260px]">
+              <span className="text-[11px] text-muted mt-2 max-w-[260px]">
                 Working on: {currentTask.title}
               </span>
             )}
@@ -445,10 +445,10 @@ function Pomodoro() {
         </div>
 
         {taskCompletionPrompt && (
-          <div className="mb-5 w-full max-w-lg rounded-3xl border border-white/[0.08] bg-white/5 px-5 py-4 text-sm text-slate-200">
+          <div className="mb-5 w-full max-w-lg rounded-3xl border border-hair bg-hair px-5 py-4 text-sm text-sub">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-slate-100 flex-1 min-w-0">
-               <span className="font-semibold text-white">{taskCompletionPrompt.title}</span>. Did you complete this task during the session?
+              <p className="text-sm text-sub flex-1 min-w-0">
+               <span className="font-semibold text-ink">{taskCompletionPrompt.title}</span>. Did you complete this task during the session?
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -461,7 +461,7 @@ function Pomodoro() {
                 <button
                   type="button"
                   onClick={handleDismissTaskCompletion}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-semibold text-slate-200 transition hover:bg-white/10"
+                  className="rounded-full border border-hair bg-hair px-3 py-2 text-[10px] font-semibold text-sub transition hover:bg-hair"
                 >
                   Not yet
                 </button>
@@ -476,7 +476,7 @@ function Pomodoro() {
             <button
               onClick={handleReset}
               disabled={isAwaitingTaskDecision}
-              className={`h-12 w-12 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/10 transition-all shadow-lg ${isAwaitingTaskDecision ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`h-12 w-12 rounded-full bg-hair backdrop-blur-md border border-hair flex items-center justify-center text-muted hover:text-ink hover:border-hair transition-all shadow-lg ${isAwaitingTaskDecision ? 'opacity-50 cursor-not-allowed' : ''}`}
               title="Reset Timer"
             >
               <FaRedoAlt size={14} />
@@ -492,7 +492,7 @@ function Pomodoro() {
           <button
             onClick={handleSkip}
             disabled={isAwaitingTaskDecision}
-            className={`h-12 w-12 rounded-full bg-[#13131a] border border-white/[0.04] flex items-center justify-center text-slate-400 hover:text-white hover:border-white/10 transition-all shadow-lg ${isAwaitingTaskDecision ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`h-12 w-12 rounded-full bg-card border border-hair flex items-center justify-center text-muted hover:text-ink hover:border-hair transition-all shadow-lg ${isAwaitingTaskDecision ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Skip Session"
           >
             <FiSkipForward size={16} />
@@ -500,7 +500,7 @@ function Pomodoro() {
           </div>
 
           {!durationSelected && !isRunning && (
-            <p className="text-[11px] text-slate-500">Choose a duration first</p>
+            <p className="text-[11px] text-muted">Choose a duration first</p>
           )}
         </div>
 
@@ -509,10 +509,10 @@ function Pomodoro() {
       <button
         type="button"
         onClick={handleOpenDeepSessionCard}
-        className={`fixed bottom-6 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-white/10 shadow-[0_0_18px_rgba(168,85,247,0.22)] transition-all duration-500 sm:right-6 ${
+        className={`fixed bottom-6 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full border border-hair shadow-[0_0_18px_rgba(168,85,247,0.22)] transition-all duration-500 sm:right-6 ${
           isDeepSession
             ? 'border-purple-500 bg-purple-900'
-            : 'bg-[#13131a] hover:scale-105'
+            : 'bg-card hover:scale-105'
         }`}
       >
         {isDeepSession && (
@@ -522,7 +522,7 @@ function Pomodoro() {
             className="absolute inset-0 rounded-full border-t-2 border-purple-400"
           />
         )}
-        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white leading-3 text-center">
+        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-ink leading-3 text-center">
           Deep
         </span>
       </button>
@@ -533,8 +533,8 @@ function Pomodoro() {
      
           
             <div>
-              <p className="text-[10px] uppercase tracking-[0.28em] text-slate-500 font-semibold ml-4">Task Flow AI</p>
-              <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-white">
+              <p className="text-[10px] uppercase tracking-[0.28em] text-muted font-semibold ml-4">Task Flow AI</p>
+              <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-ink">
                 <span className='ml-4'>Go manage, study, plan, or ask the Task Flow AI.</span>
                 <button
                   type="button"
@@ -549,53 +549,53 @@ function Pomodoro() {
         
 
         {/* Daily Progress card */}
-        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10">
+        <div className="rounded-3xl bg-hair backdrop-blur-xl p-5 border border-hair">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-white tracking-wide">Daily Progress</h3>
-            <span className="text-[10px] bg-white/[0.03] border border-white/10 rounded-full px-2.5 py-1 text-purple-400 font-bold tracking-wide">
+            <h3 className="text-base font-bold text-ink tracking-wide">Daily Progress</h3>
+            <span className="text-[10px] bg-hair border border-hair rounded-full px-2.5 py-1 text-purple-400 font-bold tracking-wide">
               +{userStats.totalEarnedXp} XP Today
             </span>
           </div>
 
           <div className="space-y-1">
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Level {userStats.currentLevel}</span>
-            <div className="h-2 w-full rounded-full bg-white/[0.05] relative overflow-hidden mt-1">
+            <span className="text-[10px] text-muted font-bold uppercase tracking-wider">Level {userStats.currentLevel}</span>
+            <div className="h-2 w-full rounded-full bg-hair relative overflow-hidden mt-1">
               <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" style={{ width: `${userStats.xpProgressPercentage}%` }} />
             </div>
-            <div className="flex justify-end text-[10px] text-slate-500 font-medium pt-1">
+            <div className="flex justify-end text-[10px] text-muted font-medium pt-1">
               <span>{userStats.xpInCurrentLevel} / 1000 XP</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/[0.03]">
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/10">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Pomodoro Sessions</span>
-              <span className="text-xl font-bold text-white tracking-tight mt-1 block">
+          <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-hair">
+            <div className="bg-hair backdrop-blur-md rounded-2xl p-3 border border-hair">
+              <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">Pomodoro Sessions</span>
+              <span className="text-xl font-bold text-ink tracking-tight mt-1 block">
                 {userStats.totalPomodoros}
               </span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Completed focus blocks</span>
+              <span className="text-[10px] text-muted mt-1 block">Completed focus blocks</span>
             </div>
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-3 border border-white/10">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Deep Work</span>
-              <span className="text-xl font-bold text-white tracking-tight mt-1 block">{userStats.deepWorkLabel}</span>
-              <span className="text-[10px] text-slate-500 mt-1 block">Estimated time from completed sessions</span>
+            <div className="bg-hair backdrop-blur-md rounded-2xl p-3 border border-hair">
+              <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">Deep Work</span>
+              <span className="text-xl font-bold text-ink tracking-tight mt-1 block">{userStats.deepWorkLabel}</span>
+              <span className="text-[10px] text-muted mt-1 block">Estimated time from completed sessions</span>
             </div>
           </div>
         </div>
 
         {/* Current tasks list */}
-        <div className="rounded-3xl bg-white/5 backdrop-blur-xl p-5 border border-white/10 flex flex-col min-h-[340px]">
-          <div className="flex items-center justify-between border-b border-white/[0.04] pb-3 mb-2">
-            <h3 className="text-base font-bold text-white tracking-wide">Current Tasks ({incompleteTasks.length})</h3>
+        <div className="rounded-3xl bg-hair backdrop-blur-xl p-5 border border-hair flex flex-col min-h-[340px]">
+          <div className="flex items-center justify-between border-b border-hair pb-3 mb-2">
+            <h3 className="text-base font-bold text-ink tracking-wide">Current Tasks ({incompleteTasks.length})</h3>
             <button 
               onClick={() => setShowAddTask(!showAddTask)}
-              className="h-6 w-6 rounded-md bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-400 hover:text-white transition"
+              className="h-6 w-6 rounded-md bg-hair border border-hair flex items-center justify-center text-muted hover:text-ink transition"
             >
               <FaPlus size={10} />
             </button>
           </div>
           {!isRunning && !currentTask && (
-            <p className="text-[11px] text-slate-500 mb-4">Select a specific task to assign this Pomodoro timer.</p>
+            <p className="text-[11px] text-muted mb-4">Select a specific task to assign this Pomodoro timer.</p>
           )}
 
           {/* Add task form */}
@@ -606,7 +606,7 @@ function Pomodoro() {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 onSubmit={handleAddNewTask}
-                className="mb-4 bg-white/[0.02] border border-white/5 rounded-2xl p-3 space-y-2.5 overflow-hidden"
+                className="mb-4 bg-hair border border-hair rounded-2xl p-3 space-y-2.5 overflow-hidden"
               >
                 <input 
                   type="text" 
@@ -614,13 +614,13 @@ function Pomodoro() {
                   value={newTaskTitle} 
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="Task title..." 
-                  className="w-full bg-[#111118] border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500/50" 
+                  className="w-full bg-card2 border border-hair rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-purple-500/50" 
                 />
                 <div className="flex justify-between items-center">
                   <select 
                     value={newTaskPriority} 
                     onChange={(e) => setNewTaskPriority(e.target.value)}
-                    className="bg-[#111118] border border-white/10 rounded-lg text-[10px] text-slate-300 px-2 py-1 outline-none"
+                    className="bg-card2 border border-hair rounded-lg text-[10px] text-sub px-2 py-1 outline-none"
                   >
                     <option value="low">Low Priority</option>
                     <option value="medium">Medium Priority</option>
@@ -642,7 +642,7 @@ function Pomodoro() {
                 <div 
                   key={task.id} 
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all duration-300 ${
-                    isSelectedForTimer ? 'bg-purple-950/20 border-purple-500/30' : 'bg-[#161622]/30 border-white/[0.02]'
+                    isSelectedForTimer ? 'bg-purple-950/20 border-purple-500/30' : 'bg-card2 border-hair'
                   } ${task.completed ? 'opacity-40' : ''}`}
                 >
                   <div className="flex items-center gap-3.5 flex-1">
@@ -650,11 +650,11 @@ function Pomodoro() {
                       type="checkbox"
                       checked={task.completed}
                       onChange={() => handleToggleTask(task.id)}
-                      className="h-4 w-4 rounded border-white/20 bg-transparent text-purple-600 focus:ring-0 cursor-pointer"
+                      className="h-4 w-4 rounded border-hair bg-transparent text-purple-600 focus:ring-0 cursor-pointer"
                     />
                     <div className="cursor-pointer flex-1" onClick={() => setActiveTaskId(task.id)}>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-xs font-semibold tracking-wide text-white">
+                        <p className="text-xs font-semibold tracking-wide text-ink">
                           {task.title}
                         </p>
                         {isSelectedForTimer && (
@@ -663,7 +663,7 @@ function Pomodoro() {
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-slate-500 font-medium mt-1 block uppercase tracking-wider">
+                      <span className="text-[10px] text-muted font-medium mt-1 block uppercase tracking-wider">
                         {task.priority} Priority
                       </span>
                     </div>
@@ -683,7 +683,7 @@ function Pomodoro() {
           </div>
 
           {/* View all tasks footer */}
-          <button className="w-full text-center text-[11px] font-bold text-slate-500 hover:text-slate-300 transition mt-4 pt-3 border-t border-white/[0.03]">
+          <button className="w-full text-center text-[11px] font-bold text-muted hover:text-sub transition mt-4 pt-3 border-t border-hair">
             View All Active Tasks
           </button>
         </div>
@@ -705,38 +705,38 @@ function Pomodoro() {
               exit={{ scale: 0.8, y: 30, opacity: 0 }}
               style={{ transformOrigin: 'bottom right' }}
               onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] overflow-hidden rounded-[28px] bg-[#0d0d15]/95 backdrop-blur-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
+              className="absolute bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] overflow-hidden rounded-[28px] bg-appbg backdrop-blur-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-hair"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-fuchsia-600/10 blur-3xl pointer-events-none" />
               <div className="relative z-10">
                 <div className="mb-3.5 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-purple-400">Deep Session</p>
-                    <h2 className="mt-1.5 text-lg font-bold text-white">Focus mode that feels deeper</h2>
+                    <h2 className="mt-1.5 text-lg font-bold text-ink">Focus mode that feels deeper</h2>
                   </div>
                   <button
                     type="button"
                     onClick={handleCloseDeepSessionCard}
-                    className="rounded-full py-1 text-sm text-slate-400 transition hover:text-white"
+                    className="rounded-full py-1 text-sm text-muted transition hover:text-ink"
                   >
                     ✕
                   </button>
                 </div>
 
-                <p className="text-xs leading-5 text-slate-400">
+                <p className="text-xs leading-5 text-muted">
                   When you turn this on, your next focus block will be marked as a deep work session and counted in your stats, streak, and weekly progress.
                 </p>
 
-                <div className="mt-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] p-3.5">
+                <div className="mt-4 rounded-2xl bg-hair border border-hair p-3.5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold text-white">Deep Session</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Enable or disable it anytime.</p>
+                      <p className="text-xs font-semibold text-ink">Deep Session</p>
+                      <p className="text-[10px] text-muted mt-0.5">Enable or disable it anytime.</p>
                     </div>
                     <button
                       type="button"
                       onClick={handleToggleDeepSession}
-                      className={`relative h-6 w-12 rounded-full transition-all duration-300 ${isDeepSession ? 'bg-purple-500' : 'bg-white/10'}`}
+                      className={`relative h-6 w-12 rounded-full transition-all duration-300 ${isDeepSession ? 'bg-purple-500' : 'bg-hair'}`}
                     >
                       <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all duration-300 ${isDeepSession ? 'left-6' : 'left-1'}`} />
                     </button>
@@ -763,25 +763,25 @@ function Pomodoro() {
               initial={{ y: 25, opacity: 0, scale: 0.95 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 25, opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg rounded-[32px] border border-white/10 bg-white/5 p-7 backdrop-blur-xl shadow-[0_25px_80px_rgba(0,0,0,0.35)]"
+              className="w-full max-w-lg rounded-[32px] border border-hair bg-hair p-7 backdrop-blur-xl shadow-[0_25px_80px_rgba(0,0,0,0.35)]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500 font-semibold">Custom Timer</p>
-                  <h2 className="mt-3 text-2xl font-bold text-white">Enter duration in minutes</h2>
-                  <p className="mt-2 text-sm text-slate-400">Type the minutes you want and launch focused work instantly.</p>
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-muted font-semibold">Custom Timer</p>
+                  <h2 className="mt-3 text-2xl font-bold text-ink">Enter duration in minutes</h2>
+                  <p className="mt-2 text-sm text-muted">Type the minutes you want and launch focused work instantly.</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowCustomModal(false)}
-                  className="text-slate-400 transition hover:text-white"
+                  className="text-muted transition hover:text-ink"
                 >
                   ✕
                 </button>
               </div>
 
               <div className="mt-8 space-y-3">
-                <label className="text-sm font-semibold text-slate-300">Custom duration</label>
+                <label className="text-sm font-semibold text-sub">Custom duration</label>
                 <input
                   type="number"
                   min="1"
@@ -789,16 +789,16 @@ function Pomodoro() {
                   placeholder="Enter minutes"
                   value={customMinutes}
                   onChange={(e) => setCustomMinutes(e.target.value)}
-                  className="w-full rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 text-lg font-semibold text-white outline-none transition focus:border-purple-500/40"
+                  className="w-full rounded-[24px] border border-hair bg-hair px-5 py-4 text-lg font-semibold text-ink outline-none transition focus:border-purple-500/40"
                 />
-                <p className="text-sm text-slate-500">Just type the number of minutes you want for this custom session.</p>
+                <p className="text-sm text-muted">Just type the number of minutes you want for this custom session.</p>
               </div>
 
               <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowCustomModal(false)}
-                  className="rounded-2xl   px-5 py-3 text-sm font-semibold text-slate-300 transition hover:text-white "
+                  className="rounded-2xl   px-5 py-3 text-sm font-semibold text-sub transition hover:text-ink "
                 >
                   Cancel
                 </button>

@@ -52,15 +52,15 @@ export default function GrokChat() {
   };
 
   return (
-    <div className="flex flex-col h-[500px] rounded-3xl bg-[#13131a] border border-white/[0.05] shadow-2xl overflow-hidden">
+    <div className="flex flex-col h-[500px] rounded-3xl bg-card border border-hair shadow-2xl overflow-hidden">
       {/* الهيدر */}
-      <div className="p-5 border-b border-white/[0.05] flex items-center gap-3">
+      <div className="p-5 border-b border-hair flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-900 text-purple-300">
           <FaRobot size={18} />
         </div>
         <div>
           <h2 className="text-sm font-bold text-purple-300">Task Flow Assistant</h2>
-          <p className="text-[10px] text-slate-400">Your smart assistant for studying and planning</p>
+          <p className="text-[10px] text-muted">Your smart assistant for studying and planning</p>
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export default function GrokChat() {
             </div>
             <div className={`p-3.5 rounded-2xl text-sm max-w-[85%] ${
               message.role === 'assistant'
-                ? 'bg-slate-900 text-slate-200 border border-white/[0.03]'
+                ? 'bg-slate-900 text-slate-200 border border-hair'
                 : 'bg-purple-950 text-white border border-purple-500/20'
             }`}>
               <p className="whitespace-pre-wrap">{message.content}</p>
@@ -85,24 +85,24 @@ export default function GrokChat() {
             <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-purple-400">
               <FaRobot size={12} />
             </div>
-            <div className="text-slate-500 text-xs py-2 animate-pulse">Thinking...</div>
+            <div className="text-muted text-xs py-2 animate-pulse">Thinking...</div>
           </div>
         )}
       </div>
 
       {/* منطقة الإدخال */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-white/[0.05] bg-[#13131a]">
+      <form onSubmit={handleSubmit} className="p-4 border-t border-hair bg-card">
         <div className="relative flex items-center">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about anything"
-            className="w-full rounded-2xl border border-white/[0.08] bg-[#0f1020] px-4 py-3.5 text-sm text-white outline-none focus:border-purple-500/50"
+            className="w-full rounded-2xl border border-hair bg-inputbg px-4 py-3.5 text-sm text-ink outline-none focus:border-purple-500/50"
           />
           <button
             type="submit"
             disabled={loading}
-            className="absolute right-2 p-2 text-purple-400 hover:text-white transition disabled:opacity-30"
+            className="absolute right-2 p-2 text-purple-400 hover:text-ink transition disabled:opacity-30"
           >
             <FaPaperPlane size={16} />
           </button>
