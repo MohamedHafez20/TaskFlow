@@ -12,6 +12,7 @@ const app = express();
 // Allow the deployed frontend, local Vite dev servers, and Railway-hosted origins to access the API
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  'http://localhost:5173',
 ].filter(Boolean);
 
 const isAllowedOrigin = (origin) => {

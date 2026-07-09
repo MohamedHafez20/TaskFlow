@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const protect = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
-const { getProfile, updateName, updateEmail, updateAvatar } = require('../controllers/user.controller');
+const { getProfile, updateName, updateEmail, updateAvatar, updateProfessionalTitle } = require('../controllers/user.controller');
 
 const router = express.Router();
 
@@ -26,5 +26,6 @@ router.get('/profile', getProfile);
 router.patch('/profile/name', updateName);
 router.patch('/profile/email', updateEmail);
 router.patch('/profile/avatar', uploadAvatar, updateAvatar);
+router.patch('/profile/professional-title', updateProfessionalTitle);
 
 module.exports = router;

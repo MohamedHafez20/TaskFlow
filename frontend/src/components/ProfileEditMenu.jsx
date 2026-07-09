@@ -53,17 +53,20 @@ function ModalShell({ title, onClose, children }) {
 export default function ProfileEditMenu() {
   const userName = useUserStore((s) => s.userName);
   const userEmail = useUserStore((s) => s.userEmail);
+  const professionalTitle = useUserStore((s) => s.professionalTitle);
   const updateProfileName = useUserStore((s) => s.updateProfileName);
   const updateProfileEmail = useUserStore((s) => s.updateProfileEmail);
   const updateProfileAvatar = useUserStore((s) => s.updateProfileAvatar);
+  const updateProfessionalTitle = useUserStore((s) => s.updateProfessionalTitle);
   const { showToast } = useToast();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState(null); // 'picture' | 'name' | 'email'
+  const [activeModal, setActiveModal] = useState(null); // 'picture' | 'name' | 'email' | 'title'
   const [saving, setSaving] = useState(false);
 
   const [nameValue, setNameValue] = useState(userName || '');
   const [emailValue, setEmailValue] = useState(userEmail || '');
+  const [titleValue, setTitleValue] = useState(professionalTitle || 'Deep Worker');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
 
@@ -74,6 +77,7 @@ export default function ProfileEditMenu() {
     setMenuOpen(false);
     setNameValue(userName || '');
     setEmailValue(userEmail || '');
+    setTitleValue(professionalTitle || 'Deep Worker');
     setFile(null);
     if (preview) URL.revokeObjectURL(preview);
     setPreview('');
@@ -178,6 +182,23 @@ export default function ProfileEditMenu() {
     }
   };
 
+  const handleSaveTitle = async () => {
+    const trimmed = titleValue.trim();
+    if (!trimmed) return showToast('Please enter your title!', 'error');
+    if (trimmed.length < 2) return showToast('Title must be at least 2 characters long!', 'error');
+    if (trimmed.length > 40) return showToast('Title must be at most 40 characters!', 'error');
+
+    setSaving(true);
+    const result = await updateProfessionalTitle(trimmed);
+    setSaving(false);
+    if (result.success) {
+      showToast('Title updated successfully!', 'success');
+      setActiveModal(null);
+    } else {
+      showToast(result.message || 'Failed to update title.', 'error');
+    }
+  };
+
   const handleSaveAvatar = async () => {
     if (!file) return showToast('Please choose an image first.', 'error');
 
@@ -194,6 +215,9 @@ export default function ProfileEditMenu() {
 
   const menuItems = [
     { key: 'picture', label: 'Change Profile Picture', icon: FaCamera },
+    { key: 'name', label: 'Change Display Name', icon: FaUser },
+    { key: 'email', label: 'Change Email Address', icon: FaEnvelope },
+    { key: 'title', label: 'Edit Professional Title', icon: FaEdit },
   ];
 
   return (
@@ -318,6 +342,32 @@ export default function ProfileEditMenu() {
                 Cancel
               </button>
               <button onClick={handleSaveEmail} disabled={saving} className={primaryBtn}>
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </ModalShell>
+        )}
+
+        {activeModal === 'title' && (
+          <ModalShell title="Edit Professional Title" onClose={closeModal}>
+            <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-muted">
+              Professional title
+            </label>
+            <input
+              type="text"
+              value={titleValue}
+              onChange={(e) => setTitleValue(e.target.value)}
+              placeholder="e.g. Deep Worker, Productivity Maestro"
+              className={inputClass}
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && !saving && handleSaveTitle()}
+            />
+            <p className="mt-2 text-[10px] text-muted">This title appears across your profile and navbar.</p>
+            <div className="mt-5 flex gap-3">
+              <button onClick={closeModal} disabled={saving} className={secondaryBtn}>
+                Cancel
+              </button>
+              <button onClick={handleSaveTitle} disabled={saving} className={primaryBtn}>
                 {saving ? 'Saving...' : 'Save'}
               </button>
             </div>

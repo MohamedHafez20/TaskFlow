@@ -4,6 +4,7 @@ import useTaskStore from '../../store/useTaskStore';
 import useUserStore from '../../store/useUserStore';
 import useThemeStore from '../../store/useThemeStore';
 import { useToast } from '../Ui/ToastProvider';
+import useDeepSessionGuard from '../../hooks/useDeepSessionGuard';
 import { 
   FaBars, 
   FaBell, 
@@ -19,6 +20,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const userName = useUserStore((s) => s.userName);
+  const professionalTitle = useUserStore((s) => s.professionalTitle);
   const avatarUrl = useUserStore((s) => s.avatarUrl);
   const tasks = useTaskStore((s) => s.tasks);
   const setGlobalSearch = useTaskStore((s) => s.setGlobalSearch);
@@ -28,6 +30,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const isDarkMode = theme === 'dark';
   const isDeepSession = useTaskStore((s) => s.isDeepSession);
   const { showToast } = useToast();
+  const { handleNavigate } = useDeepSessionGuard();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const [isNotificationsMuted, setIsNotificationsMuted] = useState(false);
@@ -59,10 +62,11 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
     const value = e.target.value;
     setGlobalSearch(value);
     if (location.pathname === '/app/pomodoro' && isDeepSession) {
-      showToast('Deep session is active — staying on the timer page helps maintain focus.', 'info');
+      showToast('⏱ Search is locked during Focus Mode — stay on your Pomodoro', 'info');
+      return;
     }
     if (location.pathname !== '/app/dashboard') {
-      navigate('/app/dashboard');
+      handleNavigate('/app/dashboard');
     }
   };
 
@@ -97,7 +101,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             </h1>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-semibold text-purple-400 tracking-wider mt-0.5">
-                ⚡ Deep Worker
+                ⚡ {professionalTitle || 'Deep Worker'}
               </span>
               {isDeepSession && (
                 <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-emerald-300">

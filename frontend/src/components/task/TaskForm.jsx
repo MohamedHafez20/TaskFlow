@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import useTaskStore from "../../store/useTaskStore";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPlus, FaLightbulb, FaFire, FaCheckCircle, FaTag, FaChevronDown, FaTimes } from "react-icons/fa";
+import { FaPlus, FaLightbulb, FaFire, FaCheckCircle, FaTag, FaChevronDown, FaTimes, FaExclamation } from "react-icons/fa";
 import { useToast } from "../Ui/ToastProvider";
 
 function TaskForm({ editingTask, setEditingTask }) {
@@ -11,9 +11,11 @@ function TaskForm({ editingTask, setEditingTask }) {
 
   const [title, setTitle] = useState(editingTask ? editingTask.title : "");
   const [category, setCategory] = useState(editingTask ? editingTask.category : "general");
+  const [priority, setPriority] = useState(editingTask ? editingTask.priority : "Medium");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showPriorityMenu, setShowPriorityMenu] = useState(false);
 
   useEffect(() => {
     if (editingTask) {
@@ -32,6 +34,12 @@ function TaskForm({ editingTask, setEditingTask }) {
     { value: "health", label: "Health", icon: "💪", color: "text-red-400" },
     { value: "coding", label: "Coding", icon: "💻", color: "text-purple-400" },
     { value: "learning", label: "Learning", icon: "📚", color: "text-yellow-400" },
+  ];
+
+  const priorities = [
+    { value: "Weak", label: "Low", icon: "↓", color: "text-green-400", bg: "bg-green-500/20", border: "border-green-500/40" },
+    { value: "Medium", label: "Medium", icon: "→", color: "text-yellow-400", bg: "bg-yellow-500/20", border: "border-yellow-500/40" },
+    { value: "Strong", label: "High", icon: "↑", color: "text-red-400", bg: "bg-red-500/20", border: "border-red-500/40" },
   ];
 
   const [isCategoryManual, setIsCategoryManual] = useState(false);
@@ -130,6 +138,7 @@ function TaskForm({ editingTask, setEditingTask }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4"
+      onClick={() => setShowPriorityMenu(false)}
     >
       {/* Main Input */}
       <div className="relative">
@@ -152,6 +161,55 @@ function TaskForm({ editingTask, setEditingTask }) {
             </div>
 
             <div className="flex gap-2 items-center">
+              {/* Priority Dropdown */}
+              <div className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowPriorityMenu(!showPriorityMenu)}
+                  disabled={isLoading}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2 border transition-all min-w-0 ${
+                    priorities.find(p => p.value === priority)?.bg + ' ' + priorities.find(p => p.value === priority)?.border + ' ' + priorities.find(p => p.value === priority)?.color
+                  }`}
+                >
+                  <FaExclamation className="text-sm" />
+                  <span className="hidden sm:inline text-sm font-semibold">{priorities.find(p => p.value === priority)?.label}</span>
+                  <FaChevronDown className="text-xs" />
+                </motion.button>
+                
+                {/* Priority Menu */}
+                <AnimatePresence>
+                  {showPriorityMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full right-0 mt-2 bg-card/95 border border-hair backdrop-blur-xl rounded-xl shadow-lg z-50 min-w-[140px] overflow-hidden"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {priorities.map((p) => (
+                        <motion.button
+                          key={p.value}
+                          whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                          onClick={() => {
+                            setPriority(p.value);
+                            setShowPriorityMenu(false);
+                          }}
+                          className={`w-full px-3 py-2.5 text-left text-sm font-semibold transition-all flex items-center gap-2 ${
+                            priority === p.value
+                              ? p.bg + ' ' + p.border + ' ' + p.color
+                              : 'text-muted hover:text-ink'
+                          }`}
+                        >
+                          <span className="text-xs">{p.icon}</span>
+                          {p.label}
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              
               {/* Category Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -173,6 +231,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                     setEditingTask(null);
                     setTitle("");
                     setCategory("general");
+                    setPriority("Medium");
                     setShowSuggestion(false);
                   }}
                   className="bg-gray-600 hover:bg-gray-500 p-3 rounded-xl text-white transition-all min-w-0"

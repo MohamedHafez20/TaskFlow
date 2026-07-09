@@ -13,6 +13,7 @@ const authResponse = (user) => ({
   name: user.name,
   email: user.email,
   avatarUrl: user.avatarUrl || '',
+  professionalTitle: user.professionalTitle || 'Deep Worker',
   token: generateToken(user._id),
 });
 

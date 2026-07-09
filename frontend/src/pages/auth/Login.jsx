@@ -57,9 +57,7 @@ function Login() {
 
       <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[1.3fr_440px] gap-8 items-center relative z-10">
         
-        {/* السكشن الجانبي (الصورة/اللوجو فقط - Minimalist) */}
-      {/* السكشن الجانبي (الصورة تأخذ العرض والطول بالكامل) */}
-{/* السكشن الجانبي - تم تصغير الارتفاع وإلغاء الخلفية */}
+       
 <motion.section
   initial={{ opacity: 0, x: -20 }}
   animate={{ opacity: 1, x: 0 }}
@@ -124,7 +122,7 @@ function Login() {
               disabled={isLoading}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2 mt-4"
             >
-              {isLoading ? <><FaSpinner className="animate-spin" /> Verifying...</> : 'Initialize Session'}
+              {isLoading ? <><FaSpinner className="animate-spin" /> Verifying...</> : 'Login '}
             </button>
           </form>
 

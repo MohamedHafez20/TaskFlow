@@ -29,11 +29,9 @@ function Home() {
     // If a review submission is pending (user just logged in to leave a review),
     // stay on the landing page so the reviews section can open the modal.
     if (pendingReview) return;
-    // Otherwise, if already authenticated, take them directly to the dashboard.
-    if (isAuthenticated) {
-      navigate('/app/dashboard');
-    }
-  }, [isAuthenticated, navigate, pendingReview]);
+    // Do not auto-redirect authenticated users from the landing page.
+    // They should be able to see the landing content and use the dashboard CTA.
+  }, [pendingReview]);
 
   return (
     <div className="min-h-screen bg-transparent text-sub relative overflow-hidden font-sans scroll-smooth">

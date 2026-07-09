@@ -8,6 +8,7 @@ const useUserStore = create(
       userName: "",
       userEmail: "",
       avatarUrl: "",
+      professionalTitle: "Deep Worker",
       isAuthenticated: false,
       users: [], // Keep array for compatibility
       preferences: {
@@ -28,6 +29,7 @@ const useUserStore = create(
           userName: "",
           userEmail: "",
           avatarUrl: "",
+          professionalTitle: "Deep Worker",
           isAuthenticated: false,
           preferences: {
             autoStartBreaks: true,
@@ -46,6 +48,7 @@ const useUserStore = create(
               userName: data.name,
               userEmail: data.email,
               avatarUrl: data.avatarUrl || "",
+              professionalTitle: data.professionalTitle || "Deep Worker",
               isAuthenticated: true,
               preferences: data.preferences || {
                 autoStartBreaks: true,
@@ -71,6 +74,7 @@ const useUserStore = create(
               userName: data.name,
               userEmail: data.email,
               avatarUrl: data.avatarUrl || "",
+              professionalTitle: data.professionalTitle || "Deep Worker",
               isAuthenticated: true,
               preferences: data.preferences || {
                 autoStartBreaks: true,
@@ -96,6 +100,7 @@ const useUserStore = create(
             userName: data.name,
             userEmail: data.email,
             avatarUrl: data.avatarUrl || "",
+            professionalTitle: data.professionalTitle || "Deep Worker",
             isAuthenticated: true,
             preferences: data.preferences || {
               autoStartBreaks: true,
@@ -155,6 +160,17 @@ const useUserStore = create(
         }
       },
 
+      updateProfessionalTitle: async (professionalTitle) => {
+        try {
+          const { data } = await api.patch('/users/profile/professional-title', { professionalTitle });
+          set({ professionalTitle: data.professionalTitle || 'Deep Worker' });
+          return { success: true };
+        } catch (err) {
+          const msg = err.response?.data?.message || 'Failed to update title.';
+          return { success: false, message: msg };
+        }
+      },
+
       updatePreferences: async (prefs) => {
         try {
           const { data } = await api.put('/auth/me', { preferences: prefs });
@@ -197,6 +213,8 @@ const useUserStore = create(
       partialize: (state) => ({
         userName: state.userName,
         userEmail: state.userEmail,
+        avatarUrl: state.avatarUrl,
+        professionalTitle: state.professionalTitle,
         isAuthenticated: state.isAuthenticated,
         preferences: state.preferences,
       }),

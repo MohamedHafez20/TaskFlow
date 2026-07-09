@@ -1,10 +1,11 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBullseye, FaClock, FaCrown, FaFire, FaTimes, FaPlay, FaRedo, FaTrophy, FaStar } from 'react-icons/fa';
+import { FaBullseye, FaClock, FaCrown, FaFire, FaTimes, FaPlay, FaRedo, FaTrophy, FaStar, FaMedal } from 'react-icons/fa';
 import api from '../api/axios';
 import usePageTitle from '../hooks/usePageTitle';
 import { useToast } from '../components/Ui/ToastProvider';
 import useTaskStore from '../store/useTaskStore';
+import useUserStore from '../store/useUserStore';
 
 const BADGE_ICONS = {
   first_task: FaBullseye,
@@ -237,9 +238,9 @@ function SimpleSnakeGame({ onClose, onAward }) {
 
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
-            <div className="bg-black rounded-2xl p-6 mb-6 shadow-inner">
+            <div className="bg-gradient-to-b from-slate-950 to-slate-900 rounded-2xl p-6 mb-6 shadow-2xl shadow-emerald-500/20 border border-emerald-500/20">
               <div
-                className="grid gap-0 border-2 border-gray-600 rounded-xl overflow-hidden w-full max-w-[min(100vw-6rem,380px)] aspect-square mx-auto"
+                className="grid gap-1 border-2 border-emerald-500/40 rounded-xl overflow-hidden w-full max-w-[min(100vw-6rem,380px)] aspect-square mx-auto bg-gradient-to-br from-slate-950 to-slate-900"
                 style={{
                   gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`
                 }}
@@ -252,13 +253,14 @@ function SimpleSnakeGame({ onClose, onAward }) {
                   const isFood = food.x === x && food.y === y;
 
                   return (
-                    <div
+                    <motion.div
                       key={index}
-                      className={`aspect-square border border-gray-800 ${
-                        isSnakeHead ? 'bg-gradient-to-r from-green-400 to-emerald-400 shadow-lg' :
-                        isSnakeBody ? 'bg-gradient-to-r from-green-600 to-emerald-600' :
-                        isFood ? 'bg-gradient-to-r from-red-500 to-pink-500 rounded-full shadow-lg animate-pulse' : 'bg-gray-900'
+                      className={`aspect-square border border-slate-700/30 rounded-sm transition-all ${
+                        isSnakeHead ? 'bg-gradient-to-br from-emerald-300 via-emerald-400 to-green-500 shadow-lg shadow-emerald-500/80 scale-100' :
+                        isSnakeBody ? 'bg-gradient-to-br from-emerald-500 to-green-600 shadow-md shadow-emerald-500/40' :
+                        isFood ? 'bg-gradient-to-br from-red-400 to-pink-500 rounded-full shadow-lg shadow-red-500/60 animate-pulse' : 'bg-slate-800/30 hover:bg-slate-700/50'
                       }`}
+                      whileTap={{ scale: 0.9 }}
                     />
                   );
                 })}
@@ -452,39 +454,80 @@ function SimpleMemoryGame({ onClose, onAward }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-6 rounded-2xl bg-gradient-to-br from-slate-950 to-slate-900 border border-purple-500/20"
+        >
           {cards.map((card) => (
             <motion.button
               key={card.id}
               onClick={() => handleCardClick(card.id)}
-              className={`aspect-square rounded-2xl text-3xl font-bold transition-all duration-300 shadow-lg ${
+              className={`aspect-square rounded-2xl text-4xl font-bold transition-all duration-300 shadow-lg relative overflow-hidden group ${
                 flipped.includes(card.id) || matched.includes(card.id)
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white scale-105'
-                  : 'bg-gradient-to-r from-gray-700 to-gray-600 text-gray-700 hover:from-gray-600 hover:to-gray-500'
+                  ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white scale-105 shadow-2xl shadow-purple-500/50'
+                  : 'bg-gradient-to-br from-slate-700 to-slate-600 text-slate-600 hover:from-slate-600 hover:to-slate-500 shadow-inner'
               }`}
-              whileHover={{ scale: flipped.includes(card.id) || matched.includes(card.id) ? 1.05 : 1.1 }}
+              whileHover={{ scale: flipped.includes(card.id) || matched.includes(card.id) ? 1.05 : 1.15, rotateZ: 5 }}
               whileTap={{ scale: 0.95 }}
               disabled={matched.includes(card.id)}
             >
-              {flipped.includes(card.id) || matched.includes(card.id) ? card.emoji : '?'}
+              <motion.div
+                initial={{ rotateY: 180 }}
+                animate={{ rotateY: flipped.includes(card.id) || matched.includes(card.id) ? 0 : 180 }}
+                transition={{ duration: 0.6, type: 'spring' }}
+                className="flex items-center justify-center h-full w-full"
+              >
+                {flipped.includes(card.id) || matched.includes(card.id) ? (
+                  <span className="text-5xl drop-shadow-lg">{card.emoji}</span>
+                ) : (
+                  <span className="text-3xl font-bold text-slate-400">?</span>
+                )}
+              </motion.div>
+              {matched.includes(card.id) && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-400 opacity-30 rounded-2xl"
+                />
+              )}
             </motion.button>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
-            <p className="text-muted text-sm mb-1">Moves</p>
-            <h3 className="text-2xl font-bold text-blue-400">{moves}</h3>
-          </div>
-          <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
-            <p className="text-muted text-sm mb-1">Time</p>
-            <h3 className="text-2xl font-bold text-green-400">{formatTime(time)}</h3>
-          </div>
-          <div className="bg-hair backdrop-blur-sm border border-hair rounded-xl p-4 text-center">
-            <p className="text-muted text-sm mb-1">Best Time</p>
-            <h3 className="text-2xl font-bold text-yellow-400">{bestTime ? formatTime(bestTime) : '--'}</h3>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ staggerChildren: 0.1 }}
+          className="grid grid-cols-3 gap-4 mb-6"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-purple-500/40 rounded-xl p-4 text-center shadow-lg"
+          >
+            <p className="text-muted text-sm mb-1 font-semibold">Moves</p>
+            <h3 className="text-3xl font-bold text-purple-300">{moves}</h3>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 backdrop-blur-sm border border-cyan-500/40 rounded-xl p-4 text-center shadow-lg"
+          >
+            <p className="text-muted text-sm mb-1 font-semibold">Time</p>
+            <h3 className="text-3xl font-bold text-cyan-300">{formatTime(time)}</h3>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 backdrop-blur-sm border border-yellow-500/40 rounded-xl p-4 text-center shadow-lg"
+          >
+            <p className="text-muted text-sm mb-1 font-semibold">Best Time</p>
+            <h3 className="text-3xl font-bold text-yellow-300">{bestTime ? formatTime(bestTime) : '--'}</h3>
+          </motion.div>
+        </motion.div>
 
         {isGameComplete && (
           <motion.div
@@ -1248,10 +1291,13 @@ function GamesPage() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
   const [leaderboardPage, setLeaderboardPage] = useState(1);
+  const [showLeaderboardDetails, setShowLeaderboardDetails] = useState(false);
   const { showToast } = useToast();
   const gamificationStats = useTaskStore((s) => s.gamificationStats);
   const fetchGamificationStats = useTaskStore((s) => s.fetchGamificationStats);
   const awardGameScore = useTaskStore((s) => s.awardGameScore);
+  const userEmail = useUserStore((s) => s.email);
+  const userName = useUserStore((s) => s.userName);
 
   const filteredGames = filter === 'all' ? games : games.filter(game => game.category.toLowerCase() === filter);
   const xpInLevel = gamificationStats?.xpInCurrentLevel ?? 0;
@@ -1259,9 +1305,14 @@ function GamesPage() {
   const xpTotal = xpInLevel + xpToNext;
   const xpPercent = xpTotal > 0 ? Math.min(100, Math.round((xpInLevel / xpTotal) * 100)) : 0;
 
-  const leaderboardPerPage = 6;
-  const totalLeaderboardPages = Math.max(1, Math.ceil(leaderboard.length / leaderboardPerPage));
-  const paginatedLeaderboard = leaderboard.slice((leaderboardPage - 1) * leaderboardPerPage, leaderboardPage * leaderboardPerPage);
+  // Find current user in leaderboard and filter them out
+  const currentUserInLeaderboard = leaderboard.find(user => user.email === userEmail || user.name === userName);
+  const otherUsers = leaderboard.filter(user => user.email !== userEmail && user.name !== userName);
+  const currentUserRank = leaderboard.findIndex(user => user.email === userEmail || user.name === userName) + 1;
+
+  const leaderboardPerPage = 5;
+  const totalLeaderboardPages = Math.max(1, Math.ceil(otherUsers.length / leaderboardPerPage));
+  const paginatedLeaderboard = otherUsers.slice((leaderboardPage - 1) * leaderboardPerPage, leaderboardPage * leaderboardPerPage);
 
   const fetchLeaderboard = useCallback(async () => {
     setLeaderboardLoading(true);
@@ -1424,7 +1475,7 @@ function GamesPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
         >
           {filteredGames.map((game, index) => (
             <motion.div
@@ -1432,20 +1483,22 @@ function GamesPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              className="bg-hair backdrop-blur-xl rounded-3xl p-6 border border-hair hover:border-blue-400/40 transition-all cursor-pointer shadow-xl"
+              whileHover={{ scale: 1.05, y: -3 }}
+              className="bg-card/80 backdrop-blur-sm rounded-2xl p-5 transition-all cursor-pointer shadow-md hover:shadow-lg relative overflow-hidden group"
               onClick={() => openGame(game.id)}
             >
-              <div className="text-4xl mb-4">{game.icon}</div>
-              <h3 className="text-xl font-bold text-ink mb-2">{game.title}</h3>
-              <p className="text-sub mb-4">{game.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-purple-300 bg-purple-500/20 px-3 py-1 rounded-full">
-                  {game.category}
-                </span>
-                <span className="text-sm text-muted">
-                  {game.difficulty}
-                </span>
+              <div className="relative z-10">
+                <div className="text-5xl mb-3">{game.icon}</div>
+                <h3 className="text-lg font-bold text-ink mb-2">{game.title}</h3>
+                <p className="text-muted text-sm mb-4 leading-relaxed">{game.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted bg-hair/60 px-2.5 py-1 rounded-full">
+                    {game.category}
+                  </span>
+                  <span className="text-xs font-semibold text-muted bg-hair/60 px-2.5 py-1 rounded-full">
+                    {game.difficulty}
+                  </span>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -1457,44 +1510,88 @@ function GamesPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="h-fit rounded-2xl border border-hair bg-hair p-5 backdrop-blur-xl"
+            className="h-fit rounded-2xl border border-hair bg-hair/70 p-5 backdrop-blur-xl"
           >
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-ink">Leaderboard</h2>
-              <FaTrophy className="text-yellow-300" />
+              <h2 className="text-xl font-bold text-ink">🏆 Leaderboard</h2>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowLeaderboardDetails(!showLeaderboardDetails)}
+                className="bg-hair/80 hover:bg-hair border border-hair/80 hover:border-hair rounded-lg px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink transition-all"
+              >
+                {showLeaderboardDetails ? 'Hide All' : 'Show All'}
+              </motion.button>
             </div>
-            <div className="space-y-3">
-              {leaderboardLoading && <p className="text-sm text-muted">Loading standings...</p>}
-              {!leaderboardLoading && paginatedLeaderboard.map((user, index) => (
-                <div key={user._id} className="flex items-center gap-3 rounded-xl bg-black/20 p-3">
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                    index === 0 ? 'bg-yellow-300 text-slate-950' :
-                    index === 1 ? 'bg-slate-300 text-slate-950' :
-                    index === 2 ? 'bg-amber-600 text-white' :
-                    'bg-hair text-sub'
-                  }`}>
-                    {(leaderboardPage - 1) * leaderboardPerPage + index + 1}
+
+            {/* Current User Section */}
+            {!leaderboardLoading && currentUserInLeaderboard && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 rounded-xl border border-hair/80 bg-card/80 p-3"
+              >
+                <p className="text-xs uppercase tracking-widest text-muted mb-2 font-semibold">Your Rank</p>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow-500/30 text-sm font-bold text-yellow-300 border border-yellow-500/50">
+                    <FaMedal />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
-                    <p className="text-xs text-muted">Level {user.level}</p>
+                    <p className="text-sm font-semibold text-ink">{currentUserInLeaderboard.name}</p>
+                    <p className="text-xs text-muted">Lv {currentUserInLeaderboard.level}</p>
                   </div>
-                  <p className="text-sm font-bold text-yellow-300">{user.points}</p>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-yellow-300">{currentUserInLeaderboard.points}</p>
+                    <p className="text-xs text-muted">#{currentUserRank}</p>
+                  </div>
                 </div>
-              ))}
-              {!leaderboardLoading && leaderboard.length === 0 && (
-                <p className="text-sm text-muted">No players on the board yet.</p>
-              )}
-            </div>
-            {leaderboard.length > leaderboardPerPage && (
-              <div className="mt-4 flex items-center justify-between border-t border-hair pt-3 text-xs text-muted">
-                <span>Page {leaderboardPage} of {totalLeaderboardPages}</span>
-                <div className="flex gap-2">
-                  <button onClick={() => setLeaderboardPage((prev) => Math.max(1, prev - 1))} disabled={leaderboardPage === 1} className="rounded-lg border border-hair px-2.5 py-1 disabled:opacity-40">Prev</button>
-                  <button onClick={() => setLeaderboardPage((prev) => Math.min(totalLeaderboardPages, prev + 1))} disabled={leaderboardPage === totalLeaderboardPages} className="rounded-lg border border-hair px-2.5 py-1 disabled:opacity-40">Next</button>
-                </div>
-              </div>
+              </motion.div>
             )}
+
+            {/* Leaderboard Details - Toggle */}
+            <AnimatePresence>
+              {showLeaderboardDetails && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-2 border-t border-hair/60 pt-3"
+                >
+                  {leaderboardLoading && <p className="text-sm text-muted">Loading standings...</p>}
+                  {!leaderboardLoading && leaderboard.map((user, index) => {
+                    const actualRank = index + 1;
+                    const isCurrentUser = user.email === userEmail || user.name === userName;
+                    return (
+                      <motion.div
+                        key={user._id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.02 }}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all ${
+                          isCurrentUser ? 'bg-yellow-500/20 border border-yellow-500/40' : 'bg-black/20 hover:bg-black/30'
+                        }`}
+                      >
+                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                          actualRank === 1 ? 'bg-yellow-400 text-slate-950' :
+                          actualRank === 2 ? 'bg-slate-300 text-slate-950' :
+                          actualRank === 3 ? 'bg-amber-600 text-white' :
+                          'bg-hair text-sub'
+                        }`}>
+                          {actualRank}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-semibold text-ink">{user.name}</p>
+                        </div>
+                        <p className="text-xs font-bold text-sub">{user.points}</p>
+                      </motion.div>
+                    );
+                  })}
+                  {!leaderboardLoading && leaderboard.length === 0 && (
+                    <p className="text-sm text-muted">No players yet.</p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.aside>
         </div>
 

@@ -10,6 +10,7 @@ const profileResponse = (user) => ({
   name: user.name,
   email: user.email,
   avatarUrl: user.avatarUrl || '',
+  professionalTitle: user.professionalTitle || 'Deep Worker',
 });
 
 const getProfile = asyncHandler(async (req, res) => {
@@ -99,4 +100,35 @@ const updateAvatar = asyncHandler(async (req, res) => {
   res.json(profileResponse(user));
 });
 
-module.exports = { getProfile, updateName, updateEmail, updateAvatar };
+const updateProfessionalTitle = asyncHandler(async (req, res) => {
+  const { professionalTitle } = req.body;
+
+  if (!professionalTitle || !professionalTitle.trim()) {
+    res.status(400);
+    throw new Error('Professional title is required');
+  }
+
+  const trimmed = professionalTitle.trim();
+  if (trimmed.length < 2) {
+    res.status(400);
+    throw new Error('Professional title must be at least 2 characters long');
+  }
+
+  if (trimmed.length > 50) {
+    res.status(400);
+    throw new Error('Professional title must be at most 50 characters long');
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  user.professionalTitle = trimmed;
+  await user.save();
+
+  res.json(profileResponse(user));
+});
+
+module.exports = { getProfile, updateName, updateEmail, updateAvatar, updateProfessionalTitle };

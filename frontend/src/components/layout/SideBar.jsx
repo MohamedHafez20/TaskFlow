@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useTaskStore from '../../store/useTaskStore';
 import useUserStore from '../../store/useUserStore';
 import { useToast } from '../Ui/ToastProvider';
+import useDeepSessionGuard from '../../hooks/useDeepSessionGuard';
 import taskFlowLogo from '../../assets/Logo.webp';
 
 function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
@@ -15,6 +16,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const gamificationStats = useTaskStore((s) => s.gamificationStats);
   const isDeepSession = useTaskStore((s) => s.isDeepSession);
   const { showToast } = useToast();
+  const { handleNavigate } = useDeepSessionGuard();
 
 
   const menuItems = [
@@ -38,11 +40,12 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   };
 
   const handleMenuClick = (path) => {
-    if (isDeepSession && location.pathname === '/app/pomodoro' && path !== '/app/pomodoro') {
-      showToast('Deep session is active — leaving the timer page may interrupt your focus.', 'warning');
+    // Use Deep Session guard instead of direct navigation
+    const navigated = handleNavigate(path);
+    // Close mobile menu after navigation attempt
+    if (navigated) {
+      setIsMobileMenuOpen(false);
     }
-    navigate(path);
-    setIsMobileMenuOpen(false);
   };
 
   const containerVariants = {
