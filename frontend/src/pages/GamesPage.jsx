@@ -1247,6 +1247,7 @@ function GamesPage() {
   const [filter, setFilter] = useState('all');
   const [leaderboard, setLeaderboard] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const [leaderboardPage, setLeaderboardPage] = useState(1);
   const { showToast } = useToast();
   const gamificationStats = useTaskStore((s) => s.gamificationStats);
   const fetchGamificationStats = useTaskStore((s) => s.fetchGamificationStats);
@@ -1257,6 +1258,10 @@ function GamesPage() {
   const xpToNext = gamificationStats?.xpToNextLevel ?? 1000;
   const xpTotal = xpInLevel + xpToNext;
   const xpPercent = xpTotal > 0 ? Math.min(100, Math.round((xpInLevel / xpTotal) * 100)) : 0;
+
+  const leaderboardPerPage = 6;
+  const totalLeaderboardPages = Math.max(1, Math.ceil(leaderboard.length / leaderboardPerPage));
+  const paginatedLeaderboard = leaderboard.slice((leaderboardPage - 1) * leaderboardPerPage, leaderboardPage * leaderboardPerPage);
 
   const fetchLeaderboard = useCallback(async () => {
     setLeaderboardLoading(true);
@@ -1274,6 +1279,10 @@ function GamesPage() {
     fetchGamificationStats();
     fetchLeaderboard();
   }, [fetchGamificationStats, fetchLeaderboard]);
+
+  useEffect(() => {
+    setLeaderboardPage(1);
+  }, [leaderboard.length]);
 
   const handleAward = useCallback(async ({ gameId, score, xpEarned, pointsEarned }) => {
     if (xpEarned <= 0 && pointsEarned <= 0) return;
@@ -1314,9 +1323,7 @@ function GamesPage() {
           <h1 className="text-3xl md:text-5xl font-bold text-ink mb-3">
             🎮 Game Center
           </h1>
-          <p className="text-lg text-sub">
-            Challenge yourself with our collection of fun and engaging games!
-          </p>
+    
           <div className="rounded-2xl border border-hair bg-hair px-5 py-4 text-right backdrop-blur-xl">
             <p className="text-xs uppercase tracking-[0.2em] text-muted">Total Points</p>
             <p className="text-3xl font-bold text-yellow-300">{gamificationStats?.points ?? 0}</p>
@@ -1458,7 +1465,7 @@ function GamesPage() {
             </div>
             <div className="space-y-3">
               {leaderboardLoading && <p className="text-sm text-muted">Loading standings...</p>}
-              {!leaderboardLoading && leaderboard.map((user, index) => (
+              {!leaderboardLoading && paginatedLeaderboard.map((user, index) => (
                 <div key={user._id} className="flex items-center gap-3 rounded-xl bg-black/20 p-3">
                   <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
                     index === 0 ? 'bg-yellow-300 text-slate-950' :
@@ -1466,7 +1473,7 @@ function GamesPage() {
                     index === 2 ? 'bg-amber-600 text-white' :
                     'bg-hair text-sub'
                   }`}>
-                    {index + 1}
+                    {(leaderboardPage - 1) * leaderboardPerPage + index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
@@ -1479,6 +1486,15 @@ function GamesPage() {
                 <p className="text-sm text-muted">No players on the board yet.</p>
               )}
             </div>
+            {leaderboard.length > leaderboardPerPage && (
+              <div className="mt-4 flex items-center justify-between border-t border-hair pt-3 text-xs text-muted">
+                <span>Page {leaderboardPage} of {totalLeaderboardPages}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => setLeaderboardPage((prev) => Math.max(1, prev - 1))} disabled={leaderboardPage === 1} className="rounded-lg border border-hair px-2.5 py-1 disabled:opacity-40">Prev</button>
+                  <button onClick={() => setLeaderboardPage((prev) => Math.min(totalLeaderboardPages, prev + 1))} disabled={leaderboardPage === totalLeaderboardPages} className="rounded-lg border border-hair px-2.5 py-1 disabled:opacity-40">Next</button>
+                </div>
+              </div>
+            )}
           </motion.aside>
         </div>
 

@@ -10,7 +10,7 @@ export default function Chatbot() {
         </h1>
       </div>
 
-      {/* المكون الرئيسي للشات */}
+    
       <TaskFlowChat />
     </div>
   );

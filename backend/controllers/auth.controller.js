@@ -4,7 +4,7 @@ const User = require('../models/User');
 const asyncHandler = require('../middleware/asyncHandler');
 
 const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
+  jwt.sign({ id }, process.env.JWT_SECRET || 'taskflow-dev-secret', {
     expiresIn: process.env.JWT_EXPIRE || '7d',
   });
 

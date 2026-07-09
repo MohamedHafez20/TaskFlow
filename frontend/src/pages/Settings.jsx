@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaUser, FaLock } from "react-icons/fa";
+import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import useUserStore from "../store/useUserStore";
 import { useToast } from "../components/Ui/ToastProvider";
 import { useNavigate } from "react-router-dom";
@@ -8,13 +8,24 @@ import usePageTitle from "../hooks/usePageTitle";
 
 function Settings() {
   const userName = useUserStore((s) => s.userName);
+  const userEmail = useUserStore((s) => s.userEmail);
   const updateName = useUserStore((s) => s.updateName);
+  const updateProfileEmail = useUserStore((s) => s.updateProfileEmail);
+  const logout = useUserStore((s) => s.logout);
   const { showToast } = useToast();
   const [newName, setNewName] = useState(userName || "");
+  const [email, setEmail] = useState(userEmail || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setEmail(userEmail || "");
+  }, [userEmail]);
 
   const handleSave = async () => {
     if (!newName.trim()) {
@@ -46,19 +57,52 @@ function Settings() {
     }
   };
 
+  const handleEmailSave = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      showToast("Please enter your email.", "error");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      showToast("Please enter a valid email address.", "error");
+      return;
+    }
+
+    const result = await updateProfileEmail(trimmedEmail);
+    if (result.success) {
+      showToast("Email updated successfully!", "success");
+    } else {
+      showToast(result.message || "Failed to update email.", "error");
+    }
+  };
+
+  const isPasswordStrong = (password) => {
+    return (
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password) &&
+      /[^A-Za-z0-9]/.test(password)
+    );
+  };
+
   const handlePasswordSave = async () => {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       showToast("Please fill all password fields.", "error");
       return;
     }
 
-    if (newPassword.length < 6) {
-      showToast("New password must be at least 6 characters.", "error");
+    if (newPassword !== confirmPassword) {
+      showToast("Password confirmation does not match.", "error");
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      showToast("Password confirmation does not match.", "error");
+    if (!isPasswordStrong(newPassword)) {
+      showToast(
+        "New password must be at least 8 characters and include uppercase, lowercase, number, and a symbol.",
+        "error"
+      );
       return;
     }
 
@@ -72,6 +116,9 @@ function Settings() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
     } else {
       showToast(result.message || "Failed to update password.", "error");
     }
@@ -86,13 +133,13 @@ function Settings() {
       className="bg-transparent p-3 text-sub sm:p-6"
     >
       <div className="mx-auto max-w-4xl space-y-6">
-        <div className="rounded-2xl border border-hair bg-card2 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-muted">Settings</p>
+        <div className="rounded-2xl bg-card/95 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.08)]">
+          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-muted">Settings</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Account preferences</h1>
-          <p className="mt-2 text-sm text-muted">Update your profile details and manage your account security from one place.</p>
+          <p className="mt-2 text-sm leading-6 text-muted">Update your profile details and manage your account settings from one clean place.</p>
         </div>
 
-        <section className="rounded-2xl border border-hair bg-card2 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+        <section className="rounded-2xl bg-card/90 p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <FaUser className="text-purple-400" />
             <h2 className="text-lg font-semibold text-ink">User profile</h2>
@@ -114,41 +161,84 @@ function Settings() {
               onClick={handleSave}
               className="w-full rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
-              Change your name
+              Save name
             </button>
           </div>
         </section>
 
-        <section className="rounded-2xl border border-hair bg-card2 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+        <section className="rounded-2xl bg-card/90 p-5 shadow-sm">
           <div className="flex items-center gap-3">
-            <FaLock className="text-purple-400" />
-            <h2 className="text-lg font-semibold text-ink">Security</h2>
+            <FaUser className="text-purple-400" />
+            <h2 className="text-lg font-semibold text-ink">Email & contact</h2>
           </div>
 
-          <div className="mt-5 space-y-4 rounded-xl border border-hair bg-inputbg p-4">
+          <div className="mt-5 space-y-4">
             <div>
+              <label className="mb-2 block text-sm font-medium text-muted">Email address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full rounded-xl border border-hair bg-inputbg px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-purple-500/50"
+              />
+            </div>
+
+            <button
+              onClick={handleEmailSave}
+              className="w-full rounded-xl bg-purple-500/10 px-4 py-3 text-sm font-semibold text-purple-300 transition hover:bg-purple-500/20"
+            >
+              Update email
+            </button>
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-card/90 p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <FaLock className="text-purple-400" />
+            <h2 className="text-lg font-semibold text-ink">Change password</h2>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <div className="relative">
               <label className="mb-2 block text-sm font-medium text-muted">Current password</label>
               <input
-                type="password"
+                type={showCurrentPassword ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter your current password"
-                className="w-full rounded-xl border border-hair bg-inputbg px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-purple-500/50"
+                className="w-full rounded-xl border border-hair bg-inputbg px-4 py-3 pr-12 text-sm text-ink outline-none placeholder:text-muted focus:border-purple-500/50"
               />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-muted"
+                aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+              >
+                {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
 
-            <div>
+            <div className="relative">
               <label className="mb-2 block text-sm font-medium text-muted">New password</label>
               <input
-                type="password"
+                type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter a new password"
-                className="w-full rounded-xl border border-hair bg-inputbg px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-purple-500/50"
+                className="w-full rounded-xl border border-hair bg-inputbg px-4 py-3 pr-12 text-sm text-ink outline-none placeholder:text-muted focus:border-purple-500/50"
               />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-muted"
+                aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+              >
+                {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
 
-            <div>
+            <div className="relative">
               <label className="mb-2 block text-sm font-medium text-muted">Confirm password</label>
               <input
                 type="password"
@@ -161,7 +251,7 @@ function Settings() {
 
             <button
               onClick={handlePasswordSave}
-              className="w-full rounded-xl border border-purple-500/20 bg-purple-500/10 px-4 py-3 text-sm font-semibold text-purple-300 transition hover:bg-purple-500/20"
+              className="w-full rounded-xl bg-purple-500/10 px-4 py-3 text-sm font-semibold text-purple-300 transition hover:bg-purple-500/20"
             >
               Update password
             </button>

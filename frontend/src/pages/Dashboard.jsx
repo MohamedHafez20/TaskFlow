@@ -10,7 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import useTaskStore from '../store/useTaskStore';
 import useUserStore from '../store/useUserStore';
 import usePageTitle from '../hooks/usePageTitle';
-import { XP_PER_LEVEL, getLevelLabel, getLevelProgress } from '../constants/gamification';
+import { useToast } from '../components/Ui/ToastProvider';
+import { XP_PER_LEVEL, getLevelProgress } from '../constants/gamification';
+import { calculateProductivityScore } from '../utils/helpers';
 
 const formatHours = (minutes) => {
   if (!minutes || minutes <= 0) return '0.0h';
@@ -27,6 +29,7 @@ function Dashboard() {
   const updateTask = useTaskStore((s) => s.updateTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
   const userName = useUserStore((s) => s.userName);
+  const { showToast } = useToast();
   
   const [timeRange, setTimeRange] = useState('All Time');
   const [showTimeDropdown, setShowTimeDropdown] = useState(false);
@@ -136,36 +139,31 @@ function Dashboard() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // حساب الـ Level والـ XP ديناميكياً
   const userStats = useMemo(() => {
     const total = tasks.length;
     const completedTasks = tasks.filter((t) => t.completed);
     const completedCount = completedTasks.length;
     const completedRatio = total === 0 ? 0 : completedCount / total;
-    
     const totalEarnedXp = completedCount * 500;
-    const streakDays = gamificationStats?.currentStreak ?? 0;
     const levelProgress = getLevelProgress(totalEarnedXp);
     const currentLevel = gamificationStats?.level ?? levelProgress.level;
     const xpInCurrentLevel = gamificationStats?.xpInCurrentLevel ?? levelProgress.xpInLevel;
     const xpProgressPercentage = total === 0 ? 0 : (xpInCurrentLevel / XP_PER_LEVEL) * 100;
-    const rankLabel = gamificationStats?.levelName ?? getLevelLabel(currentLevel);
-    // Weekly streak: count consecutive days (up to 7) where the user created at least one task.
+    const rankData = calculateProductivityScore(tasks);
+
     const weeklyStreak = (() => {
       if (!tasks || tasks.length === 0) return 0;
       const today = new Date();
-      const toYMD = (d) => new Date(d).toISOString().slice(0, 10); // YYYY-MM-DD
-      const sevenDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000); // include today (7 days)
-
-      // collect unique days where user created any task (activity day)
+      const toYMD = (d) => new Date(d).toISOString().slice(0, 10);
+      const sevenDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
       const activityDays = new Set();
+
       tasks.forEach((t) => {
         if (!t.createdAt) return;
         const d = new Date(t.createdAt);
         if (d >= sevenDaysAgo && d <= today) activityDays.add(toYMD(d));
       });
 
-      // count consecutive days ending today
       let streak = 0;
       for (let i = 0; i < 7; i++) {
         const d = new Date();
@@ -175,6 +173,7 @@ function Dashboard() {
       }
       return streak;
     })();
+
     const globalTopPercentage = total === 0 ? 0 : Math.max(1, Math.min(98, 100 - Math.round(completedRatio * 100)));
 
     return {
@@ -185,10 +184,10 @@ function Dashboard() {
       xpInCurrentLevel,
       xpProgressPercentage,
       totalEarnedXp,
-      rankLabel,
+      rankLabel: rankData.levelLabel,
       weeklyStreak,
       globalTopPercentage,
-      streakDays,
+      streakDays: gamificationStats?.currentStreak ?? 0,
     };
   }, [tasks, gamificationStats]);
 
@@ -219,16 +218,18 @@ function Dashboard() {
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const query = globalSearch.trim().toLowerCase();
 
-    return tasks.filter((task) => {
-      const matchesSearch = !query || task.title?.toLowerCase().includes(query);
-      const matchesTime = (() => {
-        if (timeRange === 'Today') return new Date(task.createdAt).toDateString() === todayStr;
-        if (timeRange === 'This Week') return new Date(task.createdAt) >= oneWeekAgo;
-        return true;
-      })();
+    return [...tasks]
+      .filter((task) => {
+        const matchesSearch = !query || task.title?.toLowerCase().includes(query);
+        const matchesTime = (() => {
+          if (timeRange === 'Today') return new Date(task.createdAt).toDateString() === todayStr;
+          if (timeRange === 'This Week') return new Date(task.createdAt) >= oneWeekAgo;
+          return true;
+        })();
 
-      return matchesSearch && matchesTime;
-    });
+        return matchesSearch && matchesTime;
+      })
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   }, [tasks, timeRange, globalSearch]);
 
   // حساب ساعات التركيز بناءً على جلسات بومودورو المكتملة
@@ -273,6 +274,11 @@ function Dashboard() {
   };
 
   const openEditModal = (task) => {
+    if (task.completed) {
+      showToast('Task already completed. Uncheck it first if you want to edit its details.', 'warning');
+      return;
+    }
+
     setIsEditing(true);
     setCurrentTaskId(task.id);
     setNewTitle(task.title);
@@ -286,6 +292,7 @@ function Dashboard() {
 
     if (isEditing) {
       updateTask(currentTaskId, { title: newTitle, priority: newPriority });
+      showToast('Task updated successfully', 'success');
     } else {
       addTask({
         id: Date.now().toString(),
@@ -294,6 +301,7 @@ function Dashboard() {
         completed: false,
         createdAt: new Date().toISOString(),
       });
+      showToast('Task added successfully', 'success');
     }
     setShowModal(false);
   };
@@ -314,6 +322,10 @@ function Dashboard() {
     }
   }, [totalPages, currentPage]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [timeRange, globalSearch]);
+
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 p-2 text-sub antialiased font-sans">
       
@@ -328,19 +340,19 @@ function Dashboard() {
             <div className="relative">
               <button 
                 onClick={() => setShowTimeDropdown(!showTimeDropdown)} 
-                className="inline-flex items-center gap-2 rounded-xl bg-hair backdrop-blur-md px-4 py-2.5 text-xs font-semibold text-sub hover:bg-hair transition border border-hair"
+                className="inline-flex items-center gap-2 rounded-xl bg-card/95 backdrop-blur-md px-4 py-2.5 text-xs font-semibold text-sub hover:bg-card transition border border-hair"
               >
                 <FaCalendarAlt className="text-muted" />
                 {timeRange}
               </button>
               
               {showTimeDropdown && (
-                <div className="absolute right-0 mt-2 bg-hair backdrop-blur-md border border-hair rounded-xl py-1 w-32 shadow-xl z-50 text-xs">
+                <div className="absolute right-0 mt-2 bg-card/95 backdrop-blur-md border border-hair rounded-xl py-1 w-32 shadow-xl z-50 text-xs">
                   {['Today', 'This Week', 'All Time'].map((option) => (
                     <button 
                       key={option}
                       onClick={() => { setTimeRange(option); setShowTimeDropdown(false); }}
-                      className="w-full text-left px-3 py-2 hover:bg-hair text-sub"
+                      className="w-full text-left px-3 py-2 hover:bg-card text-sub"
                     >
                       {option}
                     </button>
@@ -351,7 +363,7 @@ function Dashboard() {
 
             <button 
               onClick={openCreateModal}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-fuchsia-500/10 transition hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:opacity-90"
             >
               <FaPlus />
               New Task
@@ -505,7 +517,11 @@ function Dashboard() {
           </div>
 
           <div className="mt-4 space-y-3">
-            {paginatedTasks.map((task) => {
+            {paginatedTasks.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-hair bg-black/10 p-6 text-center text-sm text-muted">
+                No active tasks match your current filter yet. Create a fresh focus block to start.
+              </div>
+            ) : paginatedTasks.map((task) => {
               const isCurrentTimer = activeTimerTaskId === task.id;
               const isExpanded = expandedTaskId === task.id;
               
@@ -544,7 +560,12 @@ function Dashboard() {
                       )}
 
                       <div className="flex items-center gap-1 border-l border-hair pl-2">
-                        <button onClick={() => openEditModal(task)} className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:bg-hair hover:text-purple-400 transition">
+                        <button
+                          onClick={() => openEditModal(task)}
+                          disabled={task.completed}
+                          title={task.completed ? 'Completed task — uncheck to edit' : 'Edit task'}
+                          className={`h-7 w-7 rounded-lg flex items-center justify-center text-muted transition ${task.completed ? 'cursor-not-allowed opacity-40' : 'hover:bg-hair hover:text-purple-400'} `}
+                        >
                           <FaEdit size={12} />
                         </button>
                         <button onClick={() => deleteTask(task.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:bg-red-500/10 hover:text-red-400 transition">
@@ -723,7 +744,7 @@ function Dashboard() {
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-hair backdrop-blur-xl border border-hair p-6 rounded-3xl w-full max-w-xl shadow-2xl relative">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card/95 backdrop-blur-xl border border-hair p-6 rounded-3xl w-full max-w-xl shadow-2xl relative">
               <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-muted hover:text-ink transition"><FaTimes /></button>
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-2.5 w-2.5 rounded-full bg-purple-500 animate-pulse" />
@@ -732,17 +753,25 @@ function Dashboard() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-[10px] uppercase font-bold tracking-wider text-muted mb-2">Task Name</label>
-                  <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="What are you focusing on?" className="w-full bg-hair border border-hair rounded-xl px-4 py-3 text-xs text-ink outline-none focus:border-purple-500/50 focus:bg-hair transition placeholder:text-faint" />
+                  <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="What are you focusing on?" className="w-full bg-card/95 border border-hair rounded-xl px-4 py-3 text-xs text-ink outline-none focus:border-purple-500/50 focus:bg-card transition placeholder:text-faint" />
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold tracking-wider text-muted mb-2">Set Priority Level</label>
-                  <div className="relative">
-                    <select value={newPriority} onChange={(e) => setNewPriority(e.target.value)} className="w-full bg-hair backdrop-blur-md border border-hair rounded-2xl px-4 py-3 text-xs text-sub outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10 appearance-none cursor-pointer tracking-wide font-semibold">
-                      <option value="low" className="bg-card text-blue-400">Low Urgency</option>
-                      <option value="medium" className="bg-card text-purple-400">Medium Focus</option>
-                      <option value="high" className="bg-card text-orange-400">High Priority</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted text-[10px]">▼</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { value: 'low', label: 'Low', accent: 'text-emerald-400' },
+                      { value: 'medium', label: 'Medium', accent: 'text-sky-400' },
+                      { value: 'high', label: 'High', accent: 'text-orange-400' },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setNewPriority(option.value)}
+                        className={`rounded-2xl px-3 py-3 text-xs font-semibold transition-all border ${newPriority === option.value ? 'bg-gradient-to-r from-purple-600 to-indigo-600 border-transparent text-white shadow-lg shadow-purple-500/20' : 'bg-card/90 border-hair text-ink hover:bg-card'}`}
+                      >
+                        <span className={option.accent}>{option.label}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <button type="submit" className="w-full mt-2 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 py-3 text-xs font-bold text-white shadow-lg shadow-purple-500/20 transition hover:opacity-95 tracking-wide">

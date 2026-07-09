@@ -29,11 +29,11 @@ export default {
           600: '#8b5cf6',
           500: '#a855f7',
         },
-        accent: '#06f4e1',
-        accentPrimary: '#A855F7',
-        glow: '#d8b4fe',
+        accent: '#5b6ce5',
+        accentPrimary: '#6366f1',
+        glow: '#c4b5fd',
         cyan: {
-          400: '#06f4e1',
+          400: '#38bdf8',
         },
       },
       fontFamily: {

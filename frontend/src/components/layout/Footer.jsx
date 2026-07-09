@@ -2,8 +2,8 @@ import taskFlowLogo from '../../assets/Logo.webp';
 
 function Footer() {
   return (
-    <footer className="relative backdrop-blur-3xl mt-20">
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+    <footer className="relative border-t  border-white/20 backdrop-blur-3xl mt-[100px]">
+      <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8 lg:py-12">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
           
           {/* Brand Section */}
@@ -51,7 +51,7 @@ function Footer() {
         {/* Bottom Bar */}
         <div className="mt-16 border-t border-hair pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted">
-            © 2026 TaskFlow Inc. All rights reserved.
+            © 2026 Developed by OctoDocker Team. All rights reserved.
           </p>
           
         </div>

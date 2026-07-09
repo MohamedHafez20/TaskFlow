@@ -9,7 +9,36 @@ connectDB();
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+// Allow the deployed frontend, local Vite dev servers, and Railway-hosted origins to access the API
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+
+  const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+  const isLocalDev = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalizedOrigin);
+  const isRailwayOrigin = /(^https:\/\/.*\.up\.railway\.app$)|(^https:\/\/.*\.railway\.app$)/i.test(normalizedOrigin);
+  const isHostedFrontend = /\.(vercel\.app|netlify\.app|github\.io)$/i.test(normalizedOrigin);
+
+  return allowedOrigins.includes(normalizedOrigin) || isLocalDev || isRailwayOrigin || isHostedFrontend;
+};
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.options('*', cors({ origin: true, credentials: true }));
+
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth.routes'));

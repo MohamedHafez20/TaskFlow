@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, CartesianGrid, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
 import useTaskStore from '../store/useTaskStore';
 import { FaFire, FaCheckCircle, FaTrophy, FaCalendarAlt, FaClock, FaShieldAlt } from 'react-icons/fa';
@@ -49,8 +49,11 @@ function Analytics() {
     { name: 'Pending', value: Math.max(0, completionStats.total - completionStats.completed) },
   ];
 
+  const [selectedDay, setSelectedDay] = useState(ORDERED_DAYS[0]);
+
   const weeklyData = useMemo(() => {
     const counts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+    const taskMap = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] };
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     pomodoroHistory.forEach((session) => {
@@ -61,8 +64,27 @@ function Analytics() {
       }
     });
 
-    return ORDERED_DAYS.map((day) => ({ day, value: counts[day] }));
-  }, [pomodoroHistory]);
+    tasks.forEach((task) => {
+      const date = new Date(task.createdAt);
+      if (date >= oneWeekAgo) {
+        const dayName = DAY_NAMES[date.getDay()];
+        if (dayName in counts) {
+          counts[dayName] += 1;
+          taskMap[dayName].push(task);
+        }
+      }
+    });
+
+    return ORDERED_DAYS.map((day) => ({
+      day,
+      value: Math.max(4, counts[day] + Math.min(4, taskMap[day].length)),
+      pomodoroCount: counts[day],
+      taskCount: taskMap[day].length,
+      tasks: taskMap[day],
+    }));
+  }, [pomodoroHistory, tasks]);
+
+  const selectedDayData = weeklyData.find((item) => item.day === selectedDay) || weeklyData[0];
 
   usePageTitle('Analytics');
 
@@ -124,12 +146,12 @@ function Analytics() {
               <BarChart data={weeklyData}>
                 <CartesianGrid stroke='#ffffff12' vertical={false} />
                 <XAxis dataKey='day' stroke='#94a3b8' tickLine={false} axisLine={false} />
-                <YAxis stroke='#94a3b8' tickLine={false} axisLine={false} />
+                <YAxis stroke='#94a3b8' tickLine={false} axisLine={false} domain={[0, 'dataMax + 2']} />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}
                 />
-                <Bar dataKey='value' fill='#8B5CF6' radius={[8, 8, 0, 0]} />
+                <Bar dataKey='value' fill='#8B5CF6' radius={[10, 10, 0, 0]} onClick={(entry) => setSelectedDay(entry.day)} />
               </BarChart>
             </ResponsiveContainer>
           </div>

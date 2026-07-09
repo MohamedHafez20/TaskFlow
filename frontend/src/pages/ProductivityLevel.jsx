@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import useTaskStore from '../store/useTaskStore';
 import { FaTrophy, FaStar, FaMedal, FaAward, FaCheckCircle, FaFire } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
-import { getLevelLabel } from '../constants/gamification';
+import { calculateProductivityScore } from '../utils/helpers';
 
 function ProductivityLevel() {
   usePageTitle('Productivity Level');
@@ -24,33 +24,20 @@ function ProductivityLevel() {
     const total = tasks.length;
     const completed = completedTasks.length;
     const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
+    const productivityScore = calculateProductivityScore(tasks);
 
-    const baseScore = completionRate;
-    const highPriorityBonus = tasks.filter((t) => t.priority === 'high' && t.completed).length * 10;
-    const recentBonus = tasks.filter((t) => {
-      const taskDate = new Date(t.createdAt);
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      return taskDate >= weekAgo && t.completed;
-    }).length * 5;
-
-    const productivityScore = Math.min(100, baseScore + highPriorityBonus + recentBonus);
-
-    const levelNumber = Math.max(1, Math.min(7, Math.ceil(productivityScore / 14)));
-    const level = getLevelLabel(levelNumber);
     let levelColor = 'text-muted';
     let levelIcon = FaStar;
-
-    if (levelNumber >= 6) {
+    if (productivityScore.levelNumber >= 6) {
       levelColor = 'text-yellow-400';
       levelIcon = FaTrophy;
-    } else if (levelNumber >= 5) {
+    } else if (productivityScore.levelNumber >= 5) {
       levelColor = 'text-purple-400';
       levelIcon = FaAward;
-    } else if (levelNumber >= 4) {
+    } else if (productivityScore.levelNumber >= 4) {
       levelColor = 'text-blue-400';
       levelIcon = FaMedal;
-    } else if (levelNumber >= 3) {
+    } else if (productivityScore.levelNumber >= 3) {
       levelColor = 'text-fuchsia-400';
       levelIcon = FaFire;
     }
@@ -59,17 +46,13 @@ function ProductivityLevel() {
       total,
       completed,
       completionRate,
-      productivityScore,
-      level,
+      productivityScore: productivityScore.productivityScore,
+      level: productivityScore.levelLabel,
+      levelNumber: productivityScore.levelNumber,
       levelColor,
       levelIcon,
-      highPriorityCompleted: tasks.filter((t) => t.priority === 'high' && t.completed).length,
-      recentCompleted: tasks.filter((t) => {
-        const taskDate = new Date(t.createdAt);
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return taskDate >= weekAgo && t.completed;
-      }).length
+      highPriorityCompleted: productivityScore.highPriorityCompleted,
+      recentCompleted: productivityScore.recentCompleted
     };
   }, [tasks, completedTasks]);
 

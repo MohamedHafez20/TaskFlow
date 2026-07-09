@@ -55,8 +55,7 @@ function Input({ handleStartLogin }) {
 
   return (
     <div className="w-full text-sub font-sans antialiased select-none">
-      
-      {/* 🧭 سويتش وضع الدخول الاحترافي */}
+  
       <div className="flex gap-1.5 mb-6 bg-card2 border border-hair p-1 rounded-xl">
         <button
           type="button"
@@ -94,8 +93,6 @@ function Input({ handleStartLogin }) {
           )}
         </button>
       </div>
-
-      {/* 🎰 الواجهات الحركية */}
       <div className="overflow-hidden relative min-h-[260px]">
         <AnimatePresence mode="wait">
           {loginMode === 'credentials' ? (
@@ -108,7 +105,6 @@ function Input({ handleStartLogin }) {
               onSubmit={handleSubmit}
               className="space-y-4"
             >
-              {/* حقل البريد الإلكتروني */}
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-faint">
                   <FaEnvelope size={12} />
@@ -124,7 +120,6 @@ function Input({ handleStartLogin }) {
                 />
               </div>
 
-              {/* حقل كلمة المرور */}
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-faint">
                   <FaLock size={12} />
@@ -167,7 +162,7 @@ function Input({ handleStartLogin }) {
                 </button>
               </div>
 
-              {/* زر إرسال الفورم */}
+           \
               <button
                 type="submit"
                 disabled={isLoading}

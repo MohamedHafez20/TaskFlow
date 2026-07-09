@@ -12,27 +12,21 @@ function Profile() {
   const avatarUrl = useUserStore((s) => s.avatarUrl);
   const preferences = useUserStore((s) => s.preferences);
   const logout = useUserStore((s) => s.logout);
-  const updatePreferences = useUserStore((s) => s.updatePreferences);
   const { showToast } = useToast();
   const navigate = useNavigate();
 
   const tasks = useTaskStore((s) => s.tasks);
   const gamificationStats = useTaskStore((s) => s.gamificationStats);
 
-  const [autoStart, setAutoStart] = useState(true);
-  const [soundNotifications, setSoundNotifications] = useState(true);
-  const [deepFocusMood, setDeepFocusMood] = useState(false);
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.completed).length;
+  const totalPomodoroSessions = tasks.reduce((sum, task) => sum + (task.pomodoroSessions || 0), 0);
 
-  // Sync component state with store preferences
-  useEffect(() => {
-    if (preferences) {
-      setAutoStart(preferences.autoStartBreaks !== false);
-      setSoundNotifications(preferences.soundNotifications !== false);
-      setDeepFocusMood(Boolean(preferences.deepFocusMood));
-    }
-  }, [preferences]);
+  const handleTaskActivityClick = () => {
+    navigate('/app/task-activity');
+  };
 
-  const handlePasswordClick = () => {
+  const handleSettingsClick = () => {
     navigate('/app/settings');
   };
 
@@ -42,42 +36,9 @@ function Profile() {
     navigate('/login');
   };
 
-  const handleSaveChanges = async () => {
-    const result = await updatePreferences({
-      autoStartBreaks: autoStart,
-      soundNotifications: soundNotifications,
-      deepFocusMood: deepFocusMood
-    });
-
-    if (result.success) {
-      showToast("Preferences updated successfully!", "success");
-    } else {
-      showToast(result.message || "Failed to update preferences.", "error");
-    }
-  };
-
-  const handleResetDefaults = async () => {
-    setAutoStart(true);
-    setSoundNotifications(true);
-    setDeepFocusMood(false);
-
-    const result = await updatePreferences({
-      autoStartBreaks: true,
-      soundNotifications: true,
-      deepFocusMood: false
-    });
-
-    if (result.success) {
-      showToast("Preferences reset to defaults!", "success");
-    } else {
-      showToast(result.message || "Failed to reset preferences.", "error");
-    }
-  };
-
   // Calculate stats dynamically
   const completedCount = tasks.filter((t) => t.completed).length;
-  const totalCount = tasks.length;
-  const taskCompletionRate = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+  const taskCompletionRate = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
   const focusMinutes = gamificationStats?.focusMinutes || 0;
   const focusHours = Math.floor(focusMinutes / 60);
@@ -115,10 +76,13 @@ function Profile() {
               <p className="text-[11px] text-purple-400 mb-8 font-medium">{userEmail || 'user@taskflow.io'}</p>
               <div className="w-full space-y-3">
                 <button
-                  onClick={handlePasswordClick}
-                  className="w-full py-3 rounded-2xl border border-hair text-[11px] font-black uppercase tracking-widest hover:bg-hair transition-all text-sub"
+                  onClick={handleTaskActivityClick}
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-fuchsia-500 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-purple-500/10 hover:opacity-95 transition"
                 >
-                  Change Password
+                  View Task Activity
+                </button>
+                <button onClick={handleSettingsClick} className="w-full py-3 rounded-2xl border border-hair text-[11px] font-black uppercase tracking-widest hover:bg-hair transition-all text-sub">
+                  Account Settings
                 </button>
                 <button onClick={handleSignOut} className="w-full py-3 rounded-2xl text-red-400/80 border border-red-500/[0.05] text-[11px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all">
                   Sign Out
@@ -142,58 +106,35 @@ function Profile() {
                     <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(100, (focusMinutes / 3000) * 100)}%` }} />
                   </div>
                 </div>
+                <div>
+                  <div className="flex justify-between text-[11px] font-bold mb-2"><span>Pomodoro Sessions</span><span>{totalPomodoroSessions}</span></div>
+                  <div className="h-1.5 w-full bg-card2 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (totalPomodoroSessions / 20) * 100)}%` }} />
+                  </div>
+                </div>
               </div>
             </section>
           </div>
 
-          {/* Right Column: Settings Panel */}
+          {/* Right Column: Profile Links */}
           <div className="space-y-6">
-            {/* Automation & Alerts */}
-            <section className="bg-card rounded-[32px] p-8 border border-hair">
-              <h3 className="text-sm font-black text-ink mb-6">Automation & Alerts</h3>
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-ink">Auto-start breaks</p>
-                    <p className="text-[10px] text-muted mt-0.5">Automatically begin break timer when work ends.</p>
-                  </div>
-                  <button onClick={() => setAutoStart(!autoStart)} className={`w-10 h-5 rounded-full transition-colors ${autoStart ? 'bg-purple-600' : 'bg-card2'}`}>
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${autoStart ? 'translate-x-5' : 'translate-x-1'}`} />
-                  </button>
+            <section className="rounded-3xl border border-hair bg-card p-8">
+              <h2 className="text-lg font-semibold text-ink mb-4">Profile summary</h2>
+              <div className="space-y-4 text-sm text-muted">
+                <div className="rounded-2xl border border-hair bg-hair/60 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted">Total tasks</p>
+                  <p className="mt-2 text-2xl font-bold text-ink">{totalTasks}</p>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-ink">Sound Notifications</p>
-                    <p className="text-[10px] text-muted mt-0.5">Play sounds for focus and break changes.</p>
-                  </div>
-                  <button onClick={() => setSoundNotifications(!soundNotifications)} className={`w-10 h-5 rounded-full transition-colors ${soundNotifications ? 'bg-purple-600' : 'bg-card2'}`}>
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${soundNotifications ? 'translate-x-5' : 'translate-x-1'}`} />
-                  </button>
+                <div className="rounded-2xl border border-hair bg-hair/60 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted">Completed tasks</p>
+                  <p className="mt-2 text-2xl font-bold text-ink">{completedTasks}</p>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-ink">Deep Focus Mood</p>
-                    <p className="text-[10px] text-muted mt-0.5">Reduce distractions with a calmer focus mode.</p>
-                  </div>
-                  <button onClick={() => setDeepFocusMood(!deepFocusMood)} className={`w-10 h-5 rounded-full transition-colors ${deepFocusMood ? 'bg-purple-600' : 'bg-card2'}`}>
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${deepFocusMood ? 'translate-x-5' : 'translate-x-1'}`} />
-                  </button>
+                <div className="rounded-2xl border border-hair bg-hair/60 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted">Pomodoro sessions</p>
+                  <p className="mt-2 text-2xl font-bold text-ink">{totalPomodoroSessions}</p>
                 </div>
               </div>
             </section>
-
-            {/* Action Buttons Footer */}
-            <div className="flex justify-end gap-4 pt-6 border-t border-hair mt-8">
-              <button onClick={handleResetDefaults} className="px-8 py-3.5 rounded-2xl border border-hair text-[11px] font-black uppercase tracking-widest hover:bg-hair transition-colors text-sub">
-                Reset Defaults
-              </button>
-              <button onClick={handleSaveChanges} className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[11px] font-black uppercase tracking-widest flex items-center gap-2.5 shadow-[0_4px_20px_rgba(139,92,246,0.2)] hover:opacity-90 transition-opacity">
-                <FaSave size={13} />
-                Save Changes
-              </button>
-            </div>
           </div>
         </div>
       </div>

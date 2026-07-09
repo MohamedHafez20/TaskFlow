@@ -12,6 +12,7 @@ const Analytics = lazy(() => import("../pages/Analytics"));
 const CalendarView = lazy(() => import("../pages/CalendarView"));
 const Settings = lazy(() => import("../pages/Settings"));
 const ProductivityLevel = lazy(() => import("../pages/ProductivityLevel"));
+const TaskActivity = lazy(() => import("../pages/TaskActivity"));
 const Pomodoro = lazy(() => import("../pages/Pomodoro"));
 const GamesPage = lazy(() => import("../pages/GamesPage"));
 const Chatbot = lazy(() => import("../pages/Chatbot"));
@@ -19,6 +20,7 @@ const Login = lazy(() => import("../pages/auth/Login"));
 const Register = lazy(() => import("../pages/auth/Register"));
 const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
 const Home = lazy(() => import("../pages/Home"));
+const BrainDump = lazy(() => import("../pages/BrainDump"));
 const ProtectedRoute = lazy(() => import("./ProtectedRoute"));
 const Layout = lazy(() => import("../components/layout/Layout"));
 
@@ -56,6 +58,10 @@ const router = createBrowserRouter([
          element : <Profile /> 
       },
       {
+        path: "task-activity",
+        element: <TaskActivity />
+      },
+      {
         path: "games",
         element: <GamesPage />
       },
@@ -82,6 +88,10 @@ const router = createBrowserRouter([
       {
         path: "calendar",
         element: <CalendarView />
+      },
+      {
+        path: "brain-dump",
+        element: <BrainDump />
       },
       {
         path: "settings",

@@ -25,24 +25,21 @@ function Layout() {
   }, [isAuthenticated, fetchCurrentUser, fetchTasks, fetchPomodoroHistory, fetchGamificationStats]);
 
   return (
-    // 1. Ensure the parent container is transparent so the background shows through
     <div className="min-h-screen bg-transparent text-ink relative">
       <BackgroundWrapper />
-      
-      {/* 2. Changed z-0 to z-10 to ensure layout sits above the fixed background */}
-      <div className="flex min-h-screen relative z-10">
+
+      <div className="relative z-10 flex min-h-screen">
         <SideBar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
-        
-        <div className="flex-1 flex flex-col">
+
+        <div className="flex flex-1 flex-col">
           <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
-          
-          <main className="flex-1 overflow-y-auto">
-            {/* 3. Container styling remains the same, but ensure individual pages use bg-white/[0.03] */}
+
+          <main className="flex-1 overflow-y-auto min-h-0">
             <div className="mx-auto w-full max-w-[1800px] px-4 py-6 md:px-6 lg:px-8">
               <Outlet />
             </div>
           </main>
-          
+
           <Footer />
         </div>
       </div>

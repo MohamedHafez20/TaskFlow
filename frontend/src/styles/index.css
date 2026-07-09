@@ -27,18 +27,18 @@
 
 /* Light theme overrides */
 html.light {
-  --c-deep: #eef0f4;
-  --c-appbg: #f4f5f7;
+  --c-deep: #eef2ff;
+  --c-appbg: #f7f9ff;
   --c-card: #ffffff;
-  --c-card2: #f1f2f6;
+  --c-card2: #f8fbff;
   --c-input: #ffffff;
-  --c-hair: rgba(15, 23, 42, 0.10);
-  --c-ink: #15151f;
-  --c-sub: #334155;
-  --c-muted: #5b6472;
-  --c-faint: #8a93a3;
-  --c-accent: #0e7490; /* darker cyan for contrast on light */
-  --c-base-text: #1f2430;
+  --c-hair: rgba(15, 23, 42, 0.08);
+  --c-ink: #0f172a;
+  --c-sub: #253047;
+  --c-muted: #53617a;
+  --c-faint: #6e7a92;
+  --c-accent: #5b6ce5; /* milder violet accent for light mode */
+  --c-base-text: #0f172a;
 
   color-scheme: light;
 }

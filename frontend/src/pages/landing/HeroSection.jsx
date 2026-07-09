@@ -6,6 +6,7 @@ import useUserStore from '../../store/useUserStore';
 
 function HeroSection() {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
+  const ctaLabel = isAuthenticated ? 'Access your dashboard' : 'Get Started Free';
 
   return (
     <section className="relative min-h-screen pt-32 pb-20 flex items-center justify-center overflow-hidden px-4 md:px-8">
@@ -45,7 +46,7 @@ function HeroSection() {
               to={isAuthenticated ? "/app/dashboard" : "/login"}
               className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-5 py-3.5 sm:px-7 sm:py-4 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white shadow-xl shadow-purple-500/20 hover:opacity-95 transition-all group"
             >
-              Get Started Free <FaChevronRight size={9} className="group-hover:translate-x-0.5 transition-transform" />
+              {ctaLabel} <FaChevronRight size={9} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
               to="/register"

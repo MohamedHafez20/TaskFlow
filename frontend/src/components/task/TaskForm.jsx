@@ -134,7 +134,7 @@ function TaskForm({ editingTask, setEditingTask }) {
       {/* Main Input */}
       <div className="relative">
         <motion.div
-          className="bg-hair backdrop-blur-xl border-2 border-hair rounded-2xl p-4 hover:border-purple-400/50 transition-all group"
+          className="bg-card/90 backdrop-blur-xl border border-hair/80 rounded-2xl p-4 shadow-lg hover:border-purple-400/40 transition-all group"
           whileFocus={{ borderColor: "#a78bfa" }}
         >
 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
@@ -158,7 +158,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowCategoryModal(true)}
                 disabled={isLoading}
-                className="bg-hair backdrop-blur-xl border border-hair rounded-xl px-3 py-2 text-ink hover:border-purple-400/50 transition-all flex items-center gap-2 min-w-0"
+                className="bg-card/90 border border-hair/80 rounded-xl px-3 py-2 text-ink hover:border-purple-400/50 transition-all flex items-center gap-2 min-w-0"
               >
                 {categories.find(cat => cat.value === category)?.icon}
                 <span className="hidden sm:inline">{categories.find(cat => cat.value === category)?.label}</span>
@@ -185,7 +185,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAdd}
                 disabled={isLoading || !title.trim()}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed p-3 rounded-xl text-white transition-all min-w-0"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed p-3 rounded-xl text-white transition-all min-w-0"
               >
                 {isLoading ? (
                   <motion.div
@@ -214,7 +214,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                 <FaLightbulb className="text-yellow-400" />
                 <span className="font-semibold">🤖 AI Analysis:</span>
               </div>
-              <div className="bg-hair rounded-lg p-3 space-y-1 text-sm">
+              <div className="bg-card/95 rounded-lg p-3 space-y-1 text-sm border border-hair">
                 <p className="text-sub">Suggested category: <span className="font-semibold text-ink">{categories.find((cat) => cat.value === suggestion.category)?.label || 'General'}</span></p>
                 <p className={`font-semibold ${suggestion.priority === 'Strong' ? 'text-red-300' : suggestion.priority === 'Weak' ? 'text-green-300' : 'text-yellow-300'}`}>
                   Priority: {suggestion.priority === 'Strong' ? 'Strong' : suggestion.priority === 'Weak' ? 'Weak' : 'Medium'}
@@ -233,7 +233,7 @@ function TaskForm({ editingTask, setEditingTask }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="bg-hair border border-hair rounded-xl p-3"
+        className="bg-card/90 border border-hair rounded-xl p-3"
       >
         <p className="text-xs text-muted flex items-center gap-2">
           <FaFire className="text-orange-400" />
@@ -288,7 +288,7 @@ function TaskForm({ editingTask, setEditingTask }) {
                       className={`p-3 rounded-xl border transition-all text-left ${
                         category === cat.value
                           ? 'bg-purple-600/50 border-purple-400 text-white'
-                          : 'bg-hair border-hair text-sub hover:bg-hair'
+                          : 'bg-card/95 border-hair text-sub hover:bg-card'
                       }`}
                     >
                       <div className="text-2xl mb-1">{cat.icon}</div>

@@ -194,8 +194,6 @@ export default function ProfileEditMenu() {
 
   const menuItems = [
     { key: 'picture', label: 'Change Profile Picture', icon: FaCamera },
-    { key: 'name', label: 'Change Name', icon: FaUser },
-    { key: 'email', label: 'Change Email', icon: FaEnvelope },
   ];
 
   return (

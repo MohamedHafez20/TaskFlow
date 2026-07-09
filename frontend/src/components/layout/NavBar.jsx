@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useTaskStore from '../../store/useTaskStore';
 import useUserStore from '../../store/useUserStore';
 import useThemeStore from '../../store/useThemeStore';
+import { useToast } from '../Ui/ToastProvider';
 import { 
   FaBars, 
   FaBell, 
@@ -25,6 +26,8 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const isDarkMode = theme === 'dark';
+  const isDeepSession = useTaskStore((s) => s.isDeepSession);
+  const { showToast } = useToast();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const [isNotificationsMuted, setIsNotificationsMuted] = useState(false);
@@ -55,6 +58,9 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setGlobalSearch(value);
+    if (location.pathname === '/app/pomodoro' && isDeepSession) {
+      showToast('Deep session is active — staying on the timer page helps maintain focus.', 'info');
+    }
     if (location.pathname !== '/app/dashboard') {
       navigate('/app/dashboard');
     }
@@ -89,14 +95,21 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             >
               {userName || 'Kamal Abou Eid'}
             </h1>
-            <span className="text-[10px] font-semibold text-purple-400 tracking-wider mt-0.5">
-              ⚡ Deep Worker
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-semibold text-purple-400 tracking-wider mt-0.5">
+                ⚡ Deep Worker
+              </span>
+              {isDeepSession && (
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-emerald-300">
+                  Focus mode
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         {/* 2. المنتصف: شريط البحث */}
-        <div className="relative mx-2 flex-1 max-w-md md:mx-8">
+        <div className="relative mx-2 hidden flex-1 max-w-md md:mx-8 md:flex">
           <div className={`pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${globalSearch.trim() ? 'text-purple-400' : 'text-muted'}`}>
             <FaSearch className="h-full w-full" />
           </div>
@@ -111,7 +124,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
           />
 
           {showSearchMenu && (
-            <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] rounded-2xl border border-hair bg-card2 p-2 shadow-2xl backdrop-blur-xl">
+            <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-[60] rounded-2xl border border-hair bg-slate-950/85 p-2 shadow-2xl backdrop-blur-xl">
               {searchResults.length > 0 ? (
                 searchResults.map((result) => (
                   <button
