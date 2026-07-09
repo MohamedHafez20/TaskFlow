@@ -142,9 +142,9 @@ function TaskActivity() {
               <tbody className="divide-y">
                 {paginatedTasks.map((task) => (
                   <tr key={task.id} className="bg-card/90">
-                    <td className="px-4 py-4 align-top">
-                      <div className="font-semibold text-ink truncate max-w-[420px]">{task.title}</div>
-                      <div className="text-sm text-muted truncate max-w-[420px]">{task.description || '—'}</div>
+                    <td className="px-4 py-4 align-top max-w-[420px] break-words">
+                      <div className="font-semibold text-ink break-words text-sm sm:text-base">{task.title}</div>
+                      <div className="mt-1 text-sm text-muted break-words">{task.description || '—'}</div>
                     </td>
                     <td className="px-4 py-4 align-top text-muted">{task.category || 'General'}</td>
                     <td className="px-4 py-4 align-top">
