@@ -9,7 +9,23 @@ connectDB();
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+// Allow both the deployed frontend (Vercel) and local dev to hit this API
+const allowedOrigins = [
+  process.env.CLIENT_URL,      // e.g. https://task-flow-ten-snowy-81.vercel.app
+  'http://localhost:5173',     // local Vite dev server
+].filter(Boolean); // removes CLIENT_URL if it's undefined
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (e.g. curl, Postman, mobile apps)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+}));
+
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth.routes'));
