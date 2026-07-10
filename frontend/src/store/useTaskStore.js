@@ -3,7 +3,7 @@ import api from "../api/axios";
 
 // Smart task intelligence function (preserved from original code)
 const analyzeTask = (title) => {
-  const codingKeywords = ["code", "react", "javascript", "debug", "fix", "build", "develop"];
+  const codingKeywords = ["code", "react", "javascript", "debug", "fix", "build","c++", "develop"];
   const workKeywords = ["meeting", "email", "report", "presentation", "call", "review"];
   const healthKeywords = ["exercise", "gym", "run", "yoga", "walk", "diet", "sleep"];
   const personalKeywords = ["shopping", "clean", "cook", "buy", "laundry", "organize"];
