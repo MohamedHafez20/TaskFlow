@@ -2,6 +2,12 @@ import TaskCard from './TaskCard';
 import useTaskStore from '../../store/useTaskStore';
 import { motion } from 'framer-motion';
 
+const safeText = (value, fallback = "") => {
+  if (typeof value === "string") return value;
+  if (value == null || value instanceof RegExp) return fallback;
+  return String(value);
+};
+
 function TaskList({ tasks = null, setEditingTask }) {
   const storeTasks = useTaskStore((s) => s.tasks);
   const taskList = tasks || storeTasks;
@@ -26,7 +32,7 @@ function TaskList({ tasks = null, setEditingTask }) {
       className='grid gap-4'
     >
       {taskList.map((task) => (
-        <TaskCard key={task.id} task={task} setEditingTask={setEditingTask} />
+        <TaskCard key={safeText(task?.id, Math.random().toString())} task={task} setEditingTask={setEditingTask} />
       ))}
     </motion.div>
   );

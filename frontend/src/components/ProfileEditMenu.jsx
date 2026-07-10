@@ -51,9 +51,12 @@ function ModalShell({ title, onClose, children }) {
 }
 
 export default function ProfileEditMenu() {
-  const userName = useUserStore((s) => s.userName);
-  const userEmail = useUserStore((s) => s.userEmail);
-  const professionalTitle = useUserStore((s) => s.professionalTitle);
+  const rawUserName = useUserStore((s) => s.userName);
+  const rawUserEmail = useUserStore((s) => s.userEmail);
+  const rawProfessionalTitle = useUserStore((s) => s.professionalTitle);
+  const userName = typeof rawUserName === 'string' && rawUserName.trim() ? rawUserName : '';
+  const userEmail = typeof rawUserEmail === 'string' && rawUserEmail.trim() ? rawUserEmail : '';
+  const professionalTitle = typeof rawProfessionalTitle === 'string' && rawProfessionalTitle.trim() ? rawProfessionalTitle : 'Deep Worker';
   const updateProfileName = useUserStore((s) => s.updateProfileName);
   const updateProfileEmail = useUserStore((s) => s.updateProfileEmail);
   const updateProfileAvatar = useUserStore((s) => s.updateProfileAvatar);
@@ -64,9 +67,9 @@ export default function ProfileEditMenu() {
   const [activeModal, setActiveModal] = useState(null); // 'picture' | 'name' | 'email' | 'title'
   const [saving, setSaving] = useState(false);
 
-  const [nameValue, setNameValue] = useState(userName || '');
-  const [emailValue, setEmailValue] = useState(userEmail || '');
-  const [titleValue, setTitleValue] = useState(professionalTitle || 'Deep Worker');
+  const [nameValue, setNameValue] = useState(userName);
+  const [emailValue, setEmailValue] = useState(userEmail);
+  const [titleValue, setTitleValue] = useState(professionalTitle);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
 
@@ -75,9 +78,9 @@ export default function ProfileEditMenu() {
 
   const openModal = (modal) => {
     setMenuOpen(false);
-    setNameValue(userName || '');
-    setEmailValue(userEmail || '');
-    setTitleValue(professionalTitle || 'Deep Worker');
+    setNameValue(userName);
+    setEmailValue(userEmail);
+    setTitleValue(professionalTitle);
     setFile(null);
     if (preview) URL.revokeObjectURL(preview);
     setPreview('');

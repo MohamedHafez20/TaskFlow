@@ -30,7 +30,7 @@ function Layout() {
   }, [isAuthenticated, fetchCurrentUser, fetchTasks, fetchPomodoroHistory, fetchGamificationStats]);
 
   return (
-    <div className="min-h-screen bg-transparent text-ink relative">
+    <div className="min-h-screen overflow-x-hidden bg-transparent text-ink relative">
       <BackgroundWrapper />
 
       <AnimatePresence>
@@ -47,13 +47,13 @@ function Layout() {
         />
       </AnimatePresence>
 
-      <div className="relative z-10 flex min-h-screen">
+      <div className="relative z-10 flex min-h-screen overflow-hidden">
         <SideBar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-h-0 overflow-hidden md:pl-[260px]">
           <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
-          <main className="flex-1 overflow-y-auto min-h-0">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
             <div className="mx-auto w-full max-w-[1800px] px-4 py-6 md:px-6 lg:px-8">
               <Outlet />
             </div>

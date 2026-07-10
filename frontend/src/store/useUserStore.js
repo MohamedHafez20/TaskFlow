@@ -2,6 +2,25 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "../api/axios";
 
+const normalizeText = (value, fallback = "") => {
+  if (typeof value === "string") return value;
+  if (value == null || value instanceof RegExp) return fallback;
+  return String(value);
+};
+
+const sanitizeUserState = (state = {}) => ({
+  userName: normalizeText(state.userName, ""),
+  userEmail: normalizeText(state.userEmail, ""),
+  avatarUrl: normalizeText(state.avatarUrl, ""),
+  professionalTitle: normalizeText(state.professionalTitle, "Deep Worker"),
+  isAuthenticated: Boolean(state.isAuthenticated),
+  preferences: state.preferences && typeof state.preferences === 'object' ? state.preferences : {
+    autoStartBreaks: true,
+    soundNotifications: true,
+    deepFocusMood: false
+  },
+});
+
 const useUserStore = create(
   persist(
     (set, get) => ({
@@ -19,7 +38,7 @@ const useUserStore = create(
 
       setUserName: (name) => {
         // Local name update (no backend update profile route)
-        set({ userName: name });
+        set({ userName: normalizeText(name, "") });
       },
 
       logout: () => {
@@ -45,10 +64,10 @@ const useUserStore = create(
           if (data && data.token) {
             localStorage.setItem('token', data.token);
             set({
-              userName: data.name,
-              userEmail: data.email,
-              avatarUrl: data.avatarUrl || "",
-              professionalTitle: data.professionalTitle || "Deep Worker",
+              userName: normalizeText(data.name, ""),
+              userEmail: normalizeText(data.email, ""),
+              avatarUrl: normalizeText(data.avatarUrl, ""),
+              professionalTitle: normalizeText(data.professionalTitle, "Deep Worker"),
               isAuthenticated: true,
               preferences: data.preferences || {
                 autoStartBreaks: true,
@@ -71,10 +90,10 @@ const useUserStore = create(
           if (data && data.token) {
             localStorage.setItem('token', data.token);
             set({
-              userName: data.name,
-              userEmail: data.email,
-              avatarUrl: data.avatarUrl || "",
-              professionalTitle: data.professionalTitle || "Deep Worker",
+              userName: normalizeText(data.name, ""),
+              userEmail: normalizeText(data.email, ""),
+              avatarUrl: normalizeText(data.avatarUrl, ""),
+              professionalTitle: normalizeText(data.professionalTitle, "Deep Worker"),
               isAuthenticated: true,
               preferences: data.preferences || {
                 autoStartBreaks: true,
@@ -97,10 +116,10 @@ const useUserStore = create(
         try {
           const { data } = await api.get('/auth/me');
           set({
-            userName: data.name,
-            userEmail: data.email,
-            avatarUrl: data.avatarUrl || "",
-            professionalTitle: data.professionalTitle || "Deep Worker",
+            userName: normalizeText(data.name, ""),
+            userEmail: normalizeText(data.email, ""),
+            avatarUrl: normalizeText(data.avatarUrl, ""),
+            professionalTitle: normalizeText(data.professionalTitle, "Deep Worker"),
             isAuthenticated: true,
             preferences: data.preferences || {
               autoStartBreaks: true,
@@ -117,7 +136,7 @@ const useUserStore = create(
       updateName: async (name) => {
         try {
           const { data } = await api.put('/auth/me', { name });
-          set({ userName: data.name });
+          set({ userName: normalizeText(data.name, "") });
           return { success: true };
         } catch (err) {
           const msg = err.response?.data?.message || 'Failed to update name.';
@@ -128,7 +147,7 @@ const useUserStore = create(
       updateProfileName: async (name) => {
         try {
           const { data } = await api.patch('/users/profile/name', { name });
-          set({ userName: data.name });
+          set({ userName: normalizeText(data.name, "") });
           return { success: true };
         } catch (err) {
           const msg = err.response?.data?.message || 'Failed to update name.';
@@ -139,7 +158,7 @@ const useUserStore = create(
       updateProfileEmail: async (email) => {
         try {
           const { data } = await api.patch('/users/profile/email', { email });
-          set({ userEmail: data.email });
+          set({ userEmail: normalizeText(data.email, "") });
           return { success: true };
         } catch (err) {
           const msg = err.response?.data?.message || 'Failed to update email.';
@@ -152,8 +171,8 @@ const useUserStore = create(
           const formData = new FormData();
           formData.append('avatar', file);
           const { data } = await api.patch('/users/profile/avatar', formData);
-          set({ avatarUrl: data.avatarUrl || "" });
-          return { success: true, avatarUrl: data.avatarUrl || "" };
+          set({ avatarUrl: normalizeText(data.avatarUrl, "") });
+          return { success: true, avatarUrl: normalizeText(data.avatarUrl, "") };
         } catch (err) {
           const msg = err.response?.data?.message || 'Failed to update profile picture.';
           return { success: false, message: msg };
@@ -163,7 +182,7 @@ const useUserStore = create(
       updateProfessionalTitle: async (professionalTitle) => {
         try {
           const { data } = await api.patch('/users/profile/professional-title', { professionalTitle });
-          set({ professionalTitle: data.professionalTitle || 'Deep Worker' });
+          set({ professionalTitle: normalizeText(data.professionalTitle, 'Deep Worker') });
           return { success: true };
         } catch (err) {
           const msg = err.response?.data?.message || 'Failed to update title.';
@@ -217,6 +236,10 @@ const useUserStore = create(
         professionalTitle: state.professionalTitle,
         isAuthenticated: state.isAuthenticated,
         preferences: state.preferences,
+      }),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...sanitizeUserState(persistedState),
       }),
     }
   )

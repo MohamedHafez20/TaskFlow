@@ -9,43 +9,27 @@ connectDB();
 
 const app = express();
 
-// Allow the deployed frontend, local Vite dev servers, and Railway-hosted origins to access the API
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'http://localhost:5173',
-].filter(Boolean);
+// Support a comma-separated list of allowed client origins via CLIENT_URLS or CLIENT_URL
+const rawClientUrls = process.env.CLIENT_URLS || process.env.CLIENT_URL || 'http://localhost:5173,http://localhost:5175';
+const allowedOrigins = rawClientUrls.split(',').map((u) => u.trim()).filter(Boolean);
 
-const isAllowedOrigin = (origin) => {
-  if (!origin) return true;
-
-  const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-  const isLocalDev = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalizedOrigin);
-  const isRailwayOrigin = /(^https:\/\/.*\.up\.railway\.app$)|(^https:\/\/.*\.railway\.app$)/i.test(normalizedOrigin);
-  const isHostedFrontend = /\.(vercel\.app|netlify\.app|github\.io)$/i.test(normalizedOrigin);
-
-  return allowedOrigins.includes(normalizedOrigin) || isLocalDev || isRailwayOrigin || isHostedFrontend;
-};
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (isAllowedOrigin(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-app.options('*', cors({ origin: true, credentials: true }));
-
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			// allow requests with no origin (e.g. curl, Postman, server-to-server)
+			if (!origin) return callback(null, true);
+			// exact-match check against allowed origins
+			if (allowedOrigins.includes(origin)) return callback(null, true);
+			return callback(new Error('CORS policy: origin not allowed'));
+		},
+		credentials: true,
+	})
+);
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/tasks', require('./routes/task.routes'));
-app.use('/api/notes', require('./routes/note.routes'));
 app.use('/api/pomodoro', require('./routes/pomodoro.routes'));
 app.use('/api/gamification', require('./routes/gamification.routes'));
 app.use('/api/reviews', require('./routes/review.routes'));
