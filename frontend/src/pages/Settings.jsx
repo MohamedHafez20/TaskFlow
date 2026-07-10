@@ -78,13 +78,8 @@ function Settings() {
   };
 
   const isPasswordStrong = (password) => {
-    return (
-      password.length >= 8 &&
-      /[A-Z]/.test(password) &&
-      /[a-z]/.test(password) &&
-      /[0-9]/.test(password) &&
-      /[^A-Za-z0-9]/.test(password)
-    );
+    // Keep this in sync with the registration policy (minimum 6 characters).
+    return password.length >= 6;
   };
 
   const handlePasswordSave = async () => {
@@ -99,10 +94,7 @@ function Settings() {
     }
 
     if (!isPasswordStrong(newPassword)) {
-      showToast(
-        "New password must be at least 8 characters and include uppercase, lowercase, number, and a symbol.",
-        "error"
-      );
+      showToast("New password must be at least 6 characters long.", "error");
       return;
     }
 

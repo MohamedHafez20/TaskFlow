@@ -133,18 +133,29 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error('Please fill all password fields');
   }
 
-  const user = await User.findById(req.user._id);
-
-  if (user && (await bcrypt.compare(currentPassword, user.password))) {
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
-    res.json({ message: 'Password updated successfully' });
-    return;
+  // Keep the minimum in sync with registration (6+ characters).
+  if (newPassword.length < 6) {
+    res.status(400);
+    throw new Error('New password must be at least 6 characters');
   }
 
-  res.status(401);
-  throw new Error('Invalid current password');
+  const user = await User.findById(req.user._id);
+
+  if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
+    res.status(401);
+    throw new Error('Current password is incorrect');
+  }
+
+  if (await bcrypt.compare(newPassword, user.password)) {
+    res.status(400);
+    throw new Error('New password must be different from your current password');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(newPassword, salt);
+  await user.save();
+
+  res.json({ message: 'Password updated successfully' });
 });
 
 const forgotPassword = asyncHandler(async (req, res) => {

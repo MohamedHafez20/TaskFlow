@@ -81,93 +81,111 @@ const games = [
 function SimpleSnakeGame({ onClose, onAward }) {
   const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
   const [food, setFood] = useState({ x: 15, y: 15 });
-  const [direction, setDirection] = useState('RIGHT');
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [highScore, setHighScore] = useState(localStorage.getItem('snakeHighScore') || 0);
+  const [highScore, setHighScore] = useState(() => Number(localStorage.getItem('snakeHighScore')) || 0);
   const rewardAwardedRef = useRef(false);
 
   const gridSize = 18;
+  const SPEED_MS = 150;
+  const OPPOSITE = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' };
 
-  const generateFood = () => {
-    const newFood = {
-      x: Math.floor(Math.random() * gridSize),
-      y: Math.floor(Math.random() * gridSize)
-    };
-    setFood(newFood);
+  // The game loop reads everything from refs, so the interval never has to be
+  // torn down and recreated on a turn — that restart was the cause of the
+  // uneven, "floppy" cadence.
+  const directionRef = useRef('RIGHT');
+  const turnQueueRef = useRef([]);
+  const foodRef = useRef(food);
+  const highScoreRef = useRef(highScore);
+
+  const spawnFood = (snakeBody) => {
+    let next;
+    do {
+      next = { x: Math.floor(Math.random() * gridSize), y: Math.floor(Math.random() * gridSize) };
+    } while (snakeBody.some((s) => s.x === next.x && s.y === next.y));
+    foodRef.current = next;
+    setFood(next);
   };
 
-  const moveSnake = () => {
-    if (gameOver || !isPlaying) return;
+  // One fixed-cadence step. Pure ref/setter access → no stale closures.
+  const step = useCallback(() => {
+    // Apply at most one buffered turn per step, so queued inputs can never
+    // chain into an instant 180° reversal.
+    if (turnQueueRef.current.length) {
+      directionRef.current = turnQueueRef.current.shift();
+    }
+    const dir = directionRef.current;
 
-    setSnake(currentSnake => {
-      const newSnake = [...currentSnake];
-      const head = { ...newSnake[0] };
+    setSnake((prev) => {
+      const head = { ...prev[0] };
+      if (dir === 'UP') head.y -= 1;
+      else if (dir === 'DOWN') head.y += 1;
+      else if (dir === 'LEFT') head.x -= 1;
+      else head.x += 1;
 
-      switch (direction) {
-        case 'UP': head.y -= 1; break;
-        case 'DOWN': head.y += 1; break;
-        case 'LEFT': head.x -= 1; break;
-        case 'RIGHT': head.x += 1; break;
-      }
-
-      // Check wall collision
+      // Wall collision
       if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize) {
         setGameOver(true);
-        return currentSnake;
+        return prev;
       }
 
-      // Check self collision
-      if (newSnake.some(segment => segment.x === head.x && segment.y === head.y)) {
+      const willEat = head.x === foodRef.current.x && head.y === foodRef.current.y;
+      // The tail vacates its cell next frame unless we're growing, so don't
+      // count it as a collision — this removes unfair "phantom" deaths.
+      const occupied = willEat ? prev : prev.slice(0, -1);
+      if (occupied.some((s) => s.x === head.x && s.y === head.y)) {
         setGameOver(true);
-        return currentSnake;
+        return prev;
       }
 
-      newSnake.unshift(head);
-
-      // Check food collision
-      if (head.x === food.x && head.y === food.y) {
-        setScore(prev => {
-          const newScore = prev + 10;
-          if (newScore > highScore) {
-            setHighScore(newScore);
-            localStorage.setItem('snakeHighScore', newScore);
+      const nextSnake = [head, ...prev];
+      if (willEat) {
+        setScore((s) => {
+          const ns = s + 10;
+          if (ns > highScoreRef.current) {
+            highScoreRef.current = ns;
+            setHighScore(ns);
+            localStorage.setItem('snakeHighScore', ns);
           }
-          return newScore;
+          return ns;
         });
-        generateFood();
+        spawnFood(nextSnake);
       } else {
-        newSnake.pop();
+        nextSnake.pop();
       }
-
-      return newSnake;
+      return nextSnake;
     });
-  };
+  }, []);
 
   const startGame = () => {
     rewardAwardedRef.current = false;
-    setIsPlaying(true);
-    setGameOver(false);
-    setSnake([{ x: 10, y: 10 }]);
+    directionRef.current = 'RIGHT';
+    turnQueueRef.current = [];
+    const initial = [{ x: 10, y: 10 }];
+    setSnake(initial);
     setScore(0);
-    generateFood();
+    setGameOver(false);
+    spawnFood(initial);
+    setIsPlaying(true);
   };
 
   const resetGame = () => {
     rewardAwardedRef.current = false;
+    directionRef.current = 'RIGHT';
+    turnQueueRef.current = [];
     setIsPlaying(false);
     setGameOver(false);
     setSnake([{ x: 10, y: 10 }]);
     setScore(0);
-    setDirection('RIGHT');
   };
 
-  // Game loop
+  // Stable game loop: created once when play starts, cleared on game over.
   useEffect(() => {
-    const gameInterval = setInterval(moveSnake, 150);
-    return () => clearInterval(gameInterval);
-  }, [direction, gameOver, isPlaying, food]);
+    if (!isPlaying || gameOver) return undefined;
+    const id = setInterval(step, SPEED_MS);
+    return () => clearInterval(id);
+  }, [isPlaying, gameOver, step]);
 
   useEffect(() => {
     if (!gameOver || rewardAwardedRef.current || score <= 0) return;
@@ -179,30 +197,32 @@ function SimpleSnakeGame({ onClose, onAward }) {
     }
   }, [gameOver, onAward, score]);
 
-  // Keyboard controls
+  // Keyboard controls — buffer turns and reject reversals against the last
+  // queued/committed direction (arrow keys and WASD).
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if (!isPlaying) return;
-
+      let next;
       switch (e.key) {
-        case 'ArrowUp':
-          if (direction !== 'DOWN') setDirection('UP');
-          break;
-        case 'ArrowDown':
-          if (direction !== 'UP') setDirection('DOWN');
-          break;
-        case 'ArrowLeft':
-          if (direction !== 'RIGHT') setDirection('LEFT');
-          break;
-        case 'ArrowRight':
-          if (direction !== 'DOWN') setDirection('RIGHT');
-          break;
+        case 'ArrowUp': case 'w': case 'W': next = 'UP'; break;
+        case 'ArrowDown': case 's': case 'S': next = 'DOWN'; break;
+        case 'ArrowLeft': case 'a': case 'A': next = 'LEFT'; break;
+        case 'ArrowRight': case 'd': case 'D': next = 'RIGHT'; break;
+        default: return;
       }
+      e.preventDefault();
+      const queue = turnQueueRef.current;
+      const last = queue.length ? queue[queue.length - 1] : directionRef.current;
+      if (next === last || next === OPPOSITE[last]) return;
+      if (queue.length < 2) queue.push(next);
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [direction, isPlaying]);
+  }, []);
+
+  // O(1) cell lookups for the grid render (avoids scanning the snake per cell).
+  const headKey = snake.length ? `${snake[0].x},${snake[0].y}` : '';
+  const bodyKeys = new Set(snake.slice(1).map((s) => `${s.x},${s.y}`));
 
   return (
     <motion.div
@@ -248,19 +268,19 @@ function SimpleSnakeGame({ onClose, onAward }) {
                 {Array.from({ length: gridSize * gridSize }).map((_, index) => {
                   const x = index % gridSize;
                   const y = Math.floor(index / gridSize);
-                  const isSnakeHead = snake[0]?.x === x && snake[0]?.y === y;
-                  const isSnakeBody = snake.slice(1).some(segment => segment.x === x && segment.y === y);
+                  const cellKey = `${x},${y}`;
+                  const isSnakeHead = cellKey === headKey;
+                  const isSnakeBody = bodyKeys.has(cellKey);
                   const isFood = food.x === x && food.y === y;
 
                   return (
-                    <motion.div
+                    <div
                       key={index}
-                      className={`aspect-square border border-slate-700/30 rounded-sm transition-all ${
-                        isSnakeHead ? 'bg-gradient-to-br from-emerald-300 via-emerald-400 to-green-500 shadow-lg shadow-emerald-500/80 scale-100' :
+                      className={`aspect-square border border-slate-700/30 rounded-sm ${
+                        isSnakeHead ? 'bg-gradient-to-br from-emerald-300 via-emerald-400 to-green-500 shadow-lg shadow-emerald-500/80' :
                         isSnakeBody ? 'bg-gradient-to-br from-emerald-500 to-green-600 shadow-md shadow-emerald-500/40' :
-                        isFood ? 'bg-gradient-to-br from-red-400 to-pink-500 rounded-full shadow-lg shadow-red-500/60 animate-pulse' : 'bg-slate-800/30 hover:bg-slate-700/50'
+                        isFood ? 'bg-gradient-to-br from-red-400 to-pink-500 rounded-full shadow-lg shadow-red-500/60 animate-pulse' : 'bg-slate-800/30'
                       }`}
-                      whileTap={{ scale: 0.9 }}
                     />
                   );
                 })}

@@ -1,13 +1,8 @@
 import { useEffect, useState } from 'react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
-import useUserStore from '../store/useUserStore';
 import { useToast } from '../components/Ui/ToastProvider';
-
-const createId = () => {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-  return `note-${Math.random().toString(36).slice(2)}-${Date.now()}`;
-};
+import api from '../api/axios';
 
 const formatDate = (value) => {
   if (!value) return '';
@@ -22,9 +17,19 @@ const isoToLocalDatetime = (iso) => {
   return local.toISOString().slice(0, 16);
 };
 
+// Map a note document from the API to the shape this page renders.
+const mapNote = (n) => ({
+  id: n._id,
+  title: n.title,
+  content: n.content,
+  tags: n.tags || [],
+  noteDate: n.noteDate || null,
+  createdAt: n.createdAt,
+  lastEdited: n.updatedAt || n.createdAt,
+});
+
 export default function BrainDump() {
   usePageTitle('Notes');
-  const userEmail = useUserStore((s) => s.userEmail) || 'anonymous';
   const { showToast } = useToast();
 
   const [notes, setNotes] = useState([]);
@@ -38,23 +43,18 @@ export default function BrainDump() {
 
   // load notes
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(`notes:${userEmail}`) || '[]';
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) setNotes(parsed);
-    } catch (err) {
-      console.error('Failed to load notes', err);
-    }
-  }, [userEmail]);
-
-  // persist
-  useEffect(() => {
-    try {
-      localStorage.setItem(`notes:${userEmail}`, JSON.stringify(notes));
-    } catch (err) {
-      console.error('Failed to save notes', err);
-    }
-  }, [notes, userEmail]);
+    let active = true;
+    (async () => {
+      try {
+        const { data } = await api.get('/notes');
+        if (active && Array.isArray(data)) setNotes(data.map(mapNote));
+      } catch (err) {
+        console.error('Failed to load notes', err);
+        showToast(err.response?.data?.message || 'Failed to load notes', 'error');
+      }
+    })();
+    return () => { active = false; };
+  }, [showToast]);
 
   const resetForm = () => {
     setTitle('');
@@ -64,22 +64,31 @@ export default function BrainDump() {
     setNoteDate('');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const tags = tagsText.split(',').map((t) => t.trim()).filter(Boolean);
     if (!title.trim() && !content.trim()) {
       showToast('Please add a title or content', 'error');
       return;
     }
     const scheduled = noteDate ? new Date(noteDate).toISOString() : null;
-    if (editingId) {
-      setNotes((prev) => prev.map((n) => n.id === editingId ? { ...n, title: title.trim(), content: content.trim(), tags, lastEdited: Date.now() } : n));
-      showToast('Note updated', 'success');
-    } else {
-      const note = { id: createId(), title: title.trim() || 'Untitled', content: content.trim(), tags, createdAt: Date.now(), lastEdited: Date.now(), noteDate: scheduled };
-      setNotes((prev) => [note, ...prev]);
-      showToast('Note created', 'success');
+    const payload = { title: title.trim() || 'Untitled', content: content.trim(), tags, noteDate: scheduled };
+
+    try {
+      if (editingId) {
+        const { data } = await api.put(`/notes/${editingId}`, payload);
+        const mapped = mapNote(data);
+        setNotes((prev) => prev.map((n) => (n.id === editingId ? mapped : n)));
+        showToast('Note updated', 'success');
+      } else {
+        const { data } = await api.post('/notes', payload);
+        setNotes((prev) => [mapNote(data), ...prev]);
+        showToast('Note created', 'success');
+      }
+      resetForm();
+    } catch (err) {
+      console.error('Failed to save note', err);
+      showToast(err.response?.data?.message || 'Failed to save note', 'error');
     }
-    resetForm();
   };
 
   const handleOpenForm = () => {
@@ -97,12 +106,19 @@ export default function BrainDump() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     // perform deletion (called after inline confirm)
-    setNotes((prev) => prev.filter((n) => n.id !== id));
-    showToast('Note deleted', 'success');
-    if (editingId === id) resetForm();
-    setPendingDeleteId(null);
+    try {
+      await api.delete(`/notes/${id}`);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+      showToast('Note deleted', 'success');
+      if (editingId === id) resetForm();
+    } catch (err) {
+      console.error('Failed to delete note', err);
+      showToast(err.response?.data?.message || 'Failed to delete note', 'error');
+    } finally {
+      setPendingDeleteId(null);
+    }
   };
 
   return (
