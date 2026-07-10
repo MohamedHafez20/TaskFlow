@@ -35,7 +35,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
 
   const [isNotificationsMuted, setIsNotificationsMuted] = useState(false);
 
-  // حساب الـ Completion Rate ديناميك
+  // clac ulate task completion rate dynamically
   const completed = tasks.filter((task) => task.completed).length;
   const total = tasks.length;
   const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
@@ -74,7 +74,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
     <header className="sticky top-0 z-40   px-4 py-4 backdrop-blur-2xl md:px-8">
       <div className="mx-auto flex items-center justify-between gap-4">
         
-        {/* 1. الناحية الشمال: اسمك واللقب */}
+        {/* 1.left side : name and title */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -112,7 +112,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
           </div>
         </div>
 
-        {/* 2. المنتصف: شريط البحث */}
+        {/* 2. search filed*/}
         <div className="relative mx-2 hidden flex-1 max-w-md md:mx-8 md:flex">
           <div className={`pointer-events-none absolute left-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${globalSearch.trim() ? 'text-purple-400' : 'text-muted'}`}>
             <FaSearch className="h-full w-full" />
@@ -151,14 +151,14 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
           )}
         </div>
 
-        {/* 3. الناحية اليمين: الأزرار والتفاعل */}
+        {/ right side , Complation rate ad efficancy */}
         <div className="flex items-center gap-3">
           
           <span className="hidden sm:inline-flex items-center rounded-full bg-hair border border-hair px-3 py-1.5 text-[11px] font-medium text-muted">
             Efficiency: <strong className="text-purple-400 ml-1">{completionRate}%</strong>
           </span>
 
-          {/* 🔕 زر الجرس التفاعلي (شغال / صامت) */}
+          {/* Notification Toggle Button */}
           <button 
             onClick={() => setIsNotificationsMuted(!isNotificationsMuted)}
             className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition relative duration-200 ${
@@ -170,13 +170,13 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
           >
             {isNotificationsMuted ? <FaBellSlash size={13} /> : <FaBell size={13} />}
             
-            {/* نقطة الإشعار الحمراء/البنفسجية بتختفي تماماً لو الوضع صامت */}
+            {/* Notification Dot */}
             {!isNotificationsMuted && (
               <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-fuchsia-500 animate-pulse" />
             )}
           </button>
           
-          {/* زرار الثيم */}
+          {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
             className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-hair bg-hair text-muted transition hover:bg-hair hover:text-ink"
@@ -188,7 +188,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
 
           <div className="h-6 w-[1px] bg-hair hidden sm:block" />
 
-          {/* الأفاتار */}
+          {/* AVATAR  or user image if upladed*/}
           <button
             type="button"
             onClick={handleProfileClick}

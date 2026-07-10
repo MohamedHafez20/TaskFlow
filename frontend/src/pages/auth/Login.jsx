@@ -63,18 +63,16 @@ function Login() {
   animate={{ opacity: 1, x: 0 }}
   className="hidden lg:flex items-center justify-center rounded-[32px] h-[520px] relative overflow-hidden"
 >
-  {/* الصورة تغطي الكونتينر بالكامل بدون خلفية تحتها */}
   <img 
     src={taskFlowLogo} 
     alt="Background Visual" 
     className="absolute inset-0 w-full h-full object-cover opacity-40" 
   />
   
-  {/* تدرج خفيف جداً لضمان تناغم أطراف الصورة مع الـ Dark Mode */}
+
   <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10]/60 to-transparent z-0" />
 </motion.section>
 
-        {/* كارت الفورم */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -94,7 +92,7 @@ function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
+                  placeholder="Kamal@example.com"
                   className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-card2 text-ink placeholder-faint border border-hair focus:border-purple-500/50 outline-none text-xs font-semibold transition-all"
                 />
               </div>

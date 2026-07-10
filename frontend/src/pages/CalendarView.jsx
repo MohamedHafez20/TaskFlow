@@ -9,10 +9,10 @@ function CalendarView() {
   const tasks = useTaskStore((s) => s.tasks);
   const [currentDate, setCurrentDate] = useState(new Date());
   
-  // جعل اليوم الحالي هو المختار تلقائياً بدلاً من ترك الكارد فارغاً بشكل غير مريح
+
   const [selectedDate, setSelectedDate] = useState(new Date().getDate());
 
-  // حسابات أيام الشهر
+  
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
@@ -20,7 +20,7 @@ function CalendarView() {
   const getFirstDayOfMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
-
+ // Generates an array representing the days of the current month, including leading nulls for alignment
   const getDaysArray = useMemo(() => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
@@ -35,7 +35,7 @@ function CalendarView() {
     return days;
   }, [currentDate]);
 
-  // فلترة المهام لليوم المحدد
+   // Filters tasks for the selected date
   const tasksForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
     const dateString = new Date(
@@ -83,7 +83,7 @@ function CalendarView() {
       animate={{ opacity: 1, y: 0 }}
       className="p-2 md:p-6 antialiased font-sans text-sub min-h-screen"
     >
-      {/* 🚀 الهيدر العلوي الاحترافي الموحد للـ Layout */}
+      {/* to header Layout */}
       <div className="flex items-center gap-3.5 mb-8 px-2">
         <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-[0_0_20px_rgba(139,92,246,0.1)]">
           <FaCalendarAlt className="text-lg" />
@@ -96,13 +96,13 @@ function CalendarView() {
         </div>
       </div>
 
-      {/* الـ Grid الأساسي المتجاوب كلياً */}
+      {/*responisve Grid*/}
       <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_0.9fr] gap-6 items-start">
         
-        {/* سكشن النتيجة الأيسر */}
+        {/*result left*/}
         <div className="rounded-3xl bg-card border border-hair p-5 md:p-7 shadow-xl">
           
-          {/* التحكم في الشهور */}
+          {/* control of the month */}
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-hair">
             <h2 className="text-base font-black text-ink tracking-wide font-mono">
               {monthNames[currentDate.getMonth()].toUpperCase()} {currentDate.getFullYear()}
@@ -124,7 +124,7 @@ function CalendarView() {
             </div>
           </div>
 
-          {/* أيام الأسبوع */}
+          {/* days of the week */}
           <div className="grid grid-cols-7 gap-2 mb-3 text-center">
             {dayNames.map((day) => (
               <div key={day} className="text-[10px] font-black uppercase tracking-widest text-muted py-1">
@@ -133,7 +133,7 @@ function CalendarView() {
             ))}
           </div>
 
-          {/* شبكة الأيام */}
+          {/* days of the month */}
           <div className="grid grid-cols-7 gap-2">
             {getDaysArray.map((day, index) => {
               const { total, completed } = getTaskStatsForDay(day);
@@ -161,7 +161,7 @@ function CalendarView() {
                         {String(day).padStart(2, '0')}
                       </span>
                       
-                      {/* خطوط مؤشرات الإنجاز المودرن أسفل مربع اليوم */}
+                      {/* progress bars */}
                       {total > 0 && (
                         <div className="w-full flex gap-1 h-1 mt-auto rounded-full overflow-hidden opacity-95">
                           {completed > 0 && (
@@ -179,7 +179,7 @@ function CalendarView() {
             })}
           </div>
 
-          {/* الفوتر الإرشادي (Legend) مدمج بشكل فخم */}
+          {/*  for displaying legend */}
           <div className="mt-6 pt-5 border-t border-hair flex items-center gap-5 text-[10px] font-bold uppercase tracking-wider text-muted">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-4 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.4)]" />
@@ -193,7 +193,7 @@ function CalendarView() {
 
         </div>
 
-        {/* سكشن عرض تفاصيل المهام الأيمن */}
+        {/* display detailed in reight */}
         <div className="rounded-3xl bg-card border border-hair p-5 md:p-6 lg:sticky lg:top-6 shadow-xl flex flex-col min-h-[420px]">
           <div className="border-b border-hair pb-4 mb-4">
             <span className="text-[10px] text-muted font-bold uppercase tracking-widest block">Selected Focus Day</span>

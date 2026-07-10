@@ -1,5 +1,5 @@
 
-import TaskFlowChat from '../components/GrokChat'; // تم تحديث الاسم هنا
+import TaskFlowChat from '../components/GrokChat'; 
 
 export default function Chatbot() {
   return (

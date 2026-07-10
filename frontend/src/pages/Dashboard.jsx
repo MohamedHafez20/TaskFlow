@@ -329,7 +329,7 @@ function Dashboard() {
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 p-2 text-sub antialiased font-sans">
       
-      {/* القسم العلوي: الهيدر والأزرار */}
+     
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -371,7 +371,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* كروت المستوى والـ AI */}
+
         <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
           <div className="relative overflow-hidden rounded-3xl bg-hair backdrop-blur-xl p-6 border border-hair">
             <div className="flex items-start justify-between">
@@ -415,10 +415,10 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* القسم الأوسط: كروت الإحصائيات (تطابق الصورة بالملي) */}
+  
       <div className="grid gap-4 md:grid-cols-3">
         
-        {/* 1. كارت HOURS FOCUSED */}
+         {/* Hours foucesed */}
         <div className="rounded-3xl bg-hair backdrop-blur-xl p-5 border border-hair flex flex-col justify-between h-[170px]">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-wider text-muted">Hours Focused</p>
@@ -439,7 +439,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* 2. كارت DEEP SESSIONS */}
+        {/*DEEP SESSIONS */}
         <div 
           onClick={() => navigate('/app/pomodoro', { state: { openDeepSession: true } })}
           className="rounded-3xl bg-hair backdrop-blur-xl p-5 border border-hair flex flex-col justify-between h-[170px] cursor-pointer hover:border-purple-500/30 transition-all duration-300 hover:bg-hair group"
@@ -477,7 +477,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* 3. كارت FLOW EFFICIENCY */}
+        {/*FLOW EFFICIENCY */}
         <div className="rounded-3xl bg-hair backdrop-blur-xl p-5 border border-hair flex items-center justify-between h-[170px]">
           <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -504,10 +504,10 @@ function Dashboard() {
       </div>
       
 
-      {/* القسم السفلي: المهمات مع الـ Dropdown الرهيب للتايمر */}
+      {/**/}
       <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr] items-start">
         
-        {/* قائمة المهمات النشطة */}
+        {/* Active Flow Tasks */}
         <div className="rounded-3xl bg-hair backdrop-blur-xl p-6 border border-hair">
           <div className="flex items-center justify-between border-b border-hair pb-4">
             <h2 className="text-base font-bold text-ink tracking-wide">Active Flow Tasks</h2>
@@ -528,7 +528,7 @@ function Dashboard() {
               return (
                 <div key={task.id} className="flex flex-col rounded-2xl bg-hair backdrop-blur-md border border-hair overflow-hidden transition-all">
                   
-                  {/* السطر الأساسي للتاسك */}
+                  {/* Main line*/}
                   <div className={`flex items-center justify-between p-3 ${task.completed ? 'opacity-40' : ''}`}>
                     <div className="flex items-start gap-4 flex-1">
                       <input 
@@ -548,7 +548,7 @@ function Dashboard() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      {/* زرار فتح درج التايمر */}
+                      {/* Timer Button */}
                       {!task.completed && (
                         <button 
                           onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
@@ -575,7 +575,7 @@ function Dashboard() {
                     </div>
                   </div>
 
-                  {/* 📥 الدرج المنبثق (التايمر المصغر المخصص لكل تاسك) */}
+                  {/* timer for every task (in buttom)*/}
                   <AnimatePresence>
                     {isExpanded && !task.completed && (
                       <motion.div 
@@ -585,7 +585,7 @@ function Dashboard() {
                         className="bg-black/20 border-t border-hair px-4 py-2.5 space-y-2.5"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                          {/* أزرار الأرقام الثابتة */}
+                          {/* Constant Numbers */}
                           <div className="flex items-center gap-1.5">
                             {[15, 20, 30, 60].map((mins) => (
                               <button
@@ -599,7 +599,7 @@ function Dashboard() {
                             ))}
                           </div>
 
-                          {/* الإدخال اليدوي (Manually) */}
+                          {/* inpu t(Manually) */}
                           <div className="flex items-center gap-1.5">
                             <input 
                               type="number"
@@ -618,7 +618,7 @@ function Dashboard() {
                             </button>
                           </div>
 
-                          {/* أزرار التحكم الفورية (Play / Pause / Stop) */}
+                          {/* (Play / Pause / Stop) */}
                           <div className="flex items-center gap-2 ml-auto">
                             <span className="text-sm font-mono font-bold text-ink mr-1">
                               {isCurrentTimer ? formatTime(timeLeft) : "Ready"}
@@ -638,7 +638,7 @@ function Dashboard() {
                               )}
                             </button>
 
-                            {/* زر الإلغاء الشامل لفك قفل السيستم وتغيير التايمر */}
+                           {/* decline  */}
                             {isCurrentTimer && (
                               <button
                                 onClick={resetTimer}
@@ -685,7 +685,7 @@ function Dashboard() {
           )}
         </div>
 
-        {/* كارد FOCUS INTENSITY */}
+        {/*  FOCUS INTENSITY */}
         <div className="rounded-3xl bg-hair backdrop-blur-xl p-6 border border-hair flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-6">
@@ -740,7 +740,7 @@ function Dashboard() {
 
       </div>
 
-      {/* المودال */}
+      {/*mode */}
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">

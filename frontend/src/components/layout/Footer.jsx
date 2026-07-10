@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FaGithub, FaTwitter, FaLinkedin } from 'react-icons/fa';
+import { FaGithub, FaTwitter, FaLinkedin, FaLinkedinIn, FaFacebook } from 'react-icons/fa';
 import taskFlowLogo from '../../assets/Logo.webp';
 
 function Footer() {
@@ -31,6 +31,12 @@ function Footer() {
               </a>
               <a href="https://www.linkedin.com/" aria-label="LinkedIn" target="_blank" rel="noreferrer" className="text-muted hover:text-ink transition">
                 <FaLinkedin size={18} />
+              </a>
+              <a href="https://www.linkedin.com/" aria-label="LinkedIn" target="_blank" rel="noreferrer" className="text-muted hover:text-ink transition">
+                <FaLinkedinIn size={18} />
+              </a>
+              <a href="https://www.facebook.com/" aria-label="Facebook" target="_blank" rel="noreferrer" className="text-muted hover:text-ink transition">
+                <FaFacebook size={18} />
               </a>
             </div>
           </div>

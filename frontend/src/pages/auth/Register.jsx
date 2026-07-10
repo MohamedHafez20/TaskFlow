@@ -26,6 +26,7 @@ function Register() {
       showToast('Please complete all registration fields.', 'error');
       return false;
     }
+     // restrections for email and password
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       showToast('Please enter a valid email address.', 'error');
@@ -155,7 +156,7 @@ function Register() {
               </div>
             </div>
 
-            {/* تأكيد كلمة المرور */}
+            {/* confirm password */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-muted px-1">Confirm Password</label>
               <div className="relative">
