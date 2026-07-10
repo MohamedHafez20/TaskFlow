@@ -8,6 +8,7 @@ import usePageTitle from '../../hooks/usePageTitle';
 import taskFlowLogo from '../../assets/reg.log.png';
 import BackgroundWrapper from '../../components/layout/BackgroundWrapper';
 import api from '../../api/axios';
+import useUserStore from '../../store/useUserStore';
 
 function ForgotPassword() {
   usePageTitle('Forgot Password');

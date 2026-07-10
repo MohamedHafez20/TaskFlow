@@ -1296,7 +1296,7 @@ function GamesPage() {
   const gamificationStats = useTaskStore((s) => s.gamificationStats);
   const fetchGamificationStats = useTaskStore((s) => s.fetchGamificationStats);
   const awardGameScore = useTaskStore((s) => s.awardGameScore);
-  const userEmail = useUserStore((s) => s.email);
+  const userEmail = useUserStore((s) => s.userEmail);
   const userName = useUserStore((s) => s.userName);
 
   const filteredGames = filter === 'all' ? games : games.filter(game => game.category.toLowerCase() === filter);
