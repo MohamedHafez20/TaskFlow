@@ -151,7 +151,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
           )}
         </div>
 
-        {/ right side , Complation rate ad efficancy */}
+        {/* right side , Complation rate ad efficancy */}
         <div className="flex items-center gap-3">
           
           <span className="hidden sm:inline-flex items-center rounded-full bg-hair border border-hair px-3 py-1.5 text-[11px] font-medium text-muted">
