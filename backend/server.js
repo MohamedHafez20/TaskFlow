@@ -9,11 +9,25 @@ connectDB();
 
 const app = express();
 
-// Allow the deployed frontend, local Vite dev servers, and Railway-hosted origins to access the API
-const allowedOrigins = [
+// Allow the deployed frontend, common local dev servers, and hosted frontend origins to access the API
+const rawAllowedOrigins = [
   process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
+  process.env.VITE_APP_URL,
   'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:8080',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:5176',
+  'http://127.0.0.1:3000',
 ].filter(Boolean);
+
+const allowedOrigins = [...new Set(rawAllowedOrigins.flatMap((value) =>
+  value.split(',').map((item) => item.trim()).filter(Boolean)
+))];
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
@@ -21,24 +35,30 @@ const isAllowedOrigin = (origin) => {
   const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
   const isLocalDev = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalizedOrigin);
   const isRailwayOrigin = /(^https:\/\/.*\.up\.railway\.app$)|(^https:\/\/.*\.railway\.app$)/i.test(normalizedOrigin);
-  const isHostedFrontend = /\.(vercel\.app|netlify\.app|github\.io)$/i.test(normalizedOrigin);
+  const isHostedFrontend = /(^https:\/\/.+\.(vercel\.app|netlify\.app|github\.io)$)/i.test(normalizedOrigin);
 
   return allowedOrigins.includes(normalizedOrigin) || isLocalDev || isRailwayOrigin || isHostedFrontend;
 };
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (isAllowedOrigin(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error('CORS policy: origin not allowed'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
 
-app.options('*', cors({ origin: true, credentials: true }));
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
 
 app.use(express.json());
 
