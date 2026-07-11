@@ -19,9 +19,12 @@ import {
 function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const userName = useUserStore((s) => s.userName);
-  const professionalTitle = useUserStore((s) => s.professionalTitle);
-  const avatarUrl = useUserStore((s) => s.avatarUrl);
+  const rawUserName = useUserStore((s) => s.userName);
+  const rawProfessionalTitle = useUserStore((s) => s.professionalTitle);
+  const rawAvatarUrl = useUserStore((s) => s.avatarUrl);
+  const userName = typeof rawUserName === 'string' && rawUserName.trim() ? rawUserName : 'Kamal Abou Eid';
+  const professionalTitle = typeof rawProfessionalTitle === 'string' && rawProfessionalTitle.trim() ? rawProfessionalTitle : 'Deep Worker';
+  const avatarUrl = typeof rawAvatarUrl === 'string' ? rawAvatarUrl : '';
   const tasks = useTaskStore((s) => s.tasks);
   const setGlobalSearch = useTaskStore((s) => s.setGlobalSearch);
   const globalSearch = useTaskStore((s) => s.globalSearch);
@@ -97,11 +100,11 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
                 }
               }}
             >
-              {userName || 'Kamal Abou Eid'}
+              {userName}
             </h1>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-semibold text-purple-400 tracking-wider mt-0.5">
-                ⚡ {professionalTitle || 'Deep Worker'}
+                ⚡ {professionalTitle}
               </span>
               {isDeepSession && (
                 <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-emerald-300">
@@ -152,6 +155,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         </div>
 
         {/* right side , Complation rate ad efficancy */}
+ 
         <div className="flex items-center gap-3">
           
           <span className="hidden sm:inline-flex items-center rounded-full bg-hair border border-hair px-3 py-1.5 text-[11px] font-medium text-muted">

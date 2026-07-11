@@ -13,7 +13,7 @@ const Analytics = lazy(() => import("../pages/Analytics"));
 const CalendarView = lazy(() => import("../pages/CalendarView"));
 const Settings = lazy(() => import("../pages/Settings"));
 const ProductivityLevel = lazy(() => import("../pages/ProductivityLevel"));
-const TaskActivity = lazy(() => import("../pages/TaskActivity"));
+const TaskActivity = lazy(() => import("../pages/TaskActivity")); 
 const Pomodoro = lazy(() => import("../pages/Pomodoro"));
 const GamesPage = lazy(() => import("../pages/GamesPage"));
 const Chatbot = lazy(() => import("../pages/Chatbot"));

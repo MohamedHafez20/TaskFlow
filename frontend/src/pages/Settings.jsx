@@ -7,8 +7,10 @@ import { useNavigate } from "react-router-dom";
 import usePageTitle from "../hooks/usePageTitle";
 
 function Settings() {
-  const userName = useUserStore((s) => s.userName);
-  const userEmail = useUserStore((s) => s.userEmail);
+  const rawUserName = useUserStore((s) => s.userName);
+  const rawUserEmail = useUserStore((s) => s.userEmail);
+  const userName = typeof rawUserName === 'string' && rawUserName.trim() ? rawUserName : '';
+  const userEmail = typeof rawUserEmail === 'string' && rawUserEmail.trim() ? rawUserEmail : '';
   const updateName = useUserStore((s) => s.updateName);
   const updateProfileEmail = useUserStore((s) => s.updateProfileEmail);
   const logout = useUserStore((s) => s.logout);

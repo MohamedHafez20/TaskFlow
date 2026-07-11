@@ -10,14 +10,20 @@ import taskFlowLogo from '../../assets/Logo.webp';
 function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const userName = useUserStore((s) => s.userName) || 'Kamal Abou Eid';
+  const rawUserName = useUserStore((s) => s.userName);
   const avatarUrl = useUserStore((s) => s.avatarUrl);
+  const userName = typeof rawUserName === 'string' && rawUserName.trim() ? rawUserName : 'Kamal Abou Eid';
   const logout = useUserStore((s) => s.logout);
   const gamificationStats = useTaskStore((s) => s.gamificationStats);
   const isDeepSession = useTaskStore((s) => s.isDeepSession);
   const { showToast } = useToast();
   const { handleNavigate } = useDeepSessionGuard();
 
+  const safeAvatarUrl = typeof avatarUrl === 'string' ? avatarUrl : '';
+  const safeLevelName = typeof gamificationStats?.levelName === 'string' && gamificationStats.levelName.trim()
+    ? gamificationStats.levelName
+    : 'Free Tier';
+  const safeStreak = Number.isFinite(gamificationStats?.currentStreak) ? gamificationStats.currentStreak : 0;
 
   const menuItems = [
     { label: 'Dashboard', icon: FaHome, path: '/app/dashboard' },
@@ -79,10 +85,10 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
       <motion.aside
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
-        className={`w-full max-w-[260px] h-screen border-r border-hair p-6 backdrop-blur-2xl flex flex-col justify-between transition-all overflow-hidden ${
+        className={`w-full max-w-[260px] h-screen border-r border-hair p-6 backdrop-blur-2xl flex flex-col justify-between transition-all overflow-hidden shrink-0 ${
           isMobileMenuOpen
             ? 'fixed inset-y-0 left-0 z-50 shadow-2xl'
-            : 'hidden md:flex'
+            : 'hidden md:flex md:fixed md:inset-y-0 md:left-0 md:z-40'
         }`}
       >
         <div className="space-y-7 flex flex-col flex-1 overflow-hidden">
@@ -149,8 +155,8 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             title="Open profile"
           >
             <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-tr from-purple-600 to-fuchsia-600 flex items-center justify-center text-xs font-black text-white uppercase shadow-md shadow-purple-500/10">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
+              {safeAvatarUrl ? (
+                <img src={safeAvatarUrl} alt="Profile" className="h-full w-full object-cover" />
               ) : (
                 userName.substring(0, 2)
               )}
@@ -161,10 +167,10 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             <div className="max-w-[120px] truncate">
               <p className="text-xs font-bold text-ink tracking-wide truncate">{userName}</p>
               <p className="text-[10px] font-medium text-muted">
-                {gamificationStats?.levelName ? `${gamificationStats.levelName} • Lv ${gamificationStats.level}` : 'Free Tier'}
+                {gamificationStats?.levelName || gamificationStats?.level ? `${safeLevelName} • Lv ${gamificationStats?.level ?? 1}` : safeLevelName}
               </p>
               <p className="text-[10px] text-muted mt-0.5">
-                {gamificationStats ? `🔥 ${gamificationStats.currentStreak} day streak` : 'Streak not loaded'}
+                {gamificationStats ? `🔥 ${safeStreak} day streak` : 'Streak not loaded'}
               </p>
             </div>
           </button>

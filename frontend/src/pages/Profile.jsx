@@ -7,10 +7,14 @@ import { useToast } from '../components/Ui/ToastProvider';
 import ProfileEditMenu from '../components/ProfileEditMenu';
 
 function Profile() {
-  const userName = useUserStore((s) => s.userName);
-  const professionalTitle = useUserStore((s) => s.professionalTitle);
-  const userEmail = useUserStore((s) => s.userEmail);
-  const avatarUrl = useUserStore((s) => s.avatarUrl);
+  const rawUserName = useUserStore((s) => s.userName);
+  const rawProfessionalTitle = useUserStore((s) => s.professionalTitle);
+  const rawUserEmail = useUserStore((s) => s.userEmail);
+  const rawAvatarUrl = useUserStore((s) => s.avatarUrl);
+  const userName = typeof rawUserName === 'string' && rawUserName.trim() ? rawUserName : 'TaskFlow User';
+  const professionalTitle = typeof rawProfessionalTitle === 'string' && rawProfessionalTitle.trim() ? rawProfessionalTitle : 'Deep Worker';
+  const userEmail = typeof rawUserEmail === 'string' && rawUserEmail.trim() ? rawUserEmail : 'user@taskflow.io';
+  const avatarUrl = typeof rawAvatarUrl === 'string' ? rawAvatarUrl : '';
   const preferences = useUserStore((s) => s.preferences);
   const logout = useUserStore((s) => s.logout);
   const { showToast } = useToast();
@@ -73,9 +77,9 @@ function Profile() {
                 </div>
                 <ProfileEditMenu />
               </div>
-              <h2 className="text-lg font-black text-ink tracking-tight">{userName || 'TaskFlow User'}</h2>
-              <p className="text-xs uppercase tracking-[0.23em] font-semibold text-purple-400 mb-2">{professionalTitle || 'Deep Worker'}</p>
-              <p className="text-[11px] text-purple-400 mb-8 font-medium">{userEmail || 'user@taskflow.io'}</p>
+              <h2 className="text-lg font-black text-ink tracking-tight">{userName}</h2>
+              <p className="text-xs uppercase tracking-[0.23em] font-semibold text-purple-400 mb-2">{professionalTitle}</p>
+              <p className="text-[11px] text-purple-400 mb-8 font-medium">{userEmail}</p>
               <div className="w-full space-y-3">
                 <button
                   onClick={handleTaskActivityClick}

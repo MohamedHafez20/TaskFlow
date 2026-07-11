@@ -39,13 +39,12 @@ function Dashboard() {
   
   const [newTitle, setNewTitle] = useState('');
   const [newPriority, setNewPriority] = useState('medium');
-
-  // ⏱️ الـ States الجديدة والمطورة للـ Pomodoro
-  const [expandedTaskId, setExpandedTaskId] = useState(null); // الـ Task المفتوح السكشن بتاعها
-  const [activeTimerTaskId, setActiveTimerTaskId] = useState(null); // الـ Task الشغالة حالياً
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // الوقت الفعلي بالثواني
-  const [isTimerRunning, setIsTimerRunning] = useState(false); // حالة التشغيل
-  const [customMinutes, setCustomMinutes] = useState('25'); // الإدخال اليدوي للدقائق
+//   new state for the Pomodoro timer
+  const [expandedTaskId, setExpandedTaskId] = useState(null); // open/close the task details
+  const [activeTimerTaskId, setActiveTimerTaskId] = useState(null); // the task that currently has the Pomodoro timer running
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // default 25 minutes in seconds
+  const [isTimerRunning, setIsTimerRunning] = useState(false); // whether the Pomodoro timer is running or paused
+  const [customMinutes, setCustomMinutes] = useState('25');  // for the custom input field
   const activeTimerSessionIdRef = useRef(null);
 
   // Pagination states
@@ -114,14 +113,14 @@ function Dashboard() {
     }
   };
 
-  // إلغاء التايمر بالكامل عشان تقدر تظبط تايمر جديد
+  // decline the current Pomodoro session
   const resetTimer = () => {
     setIsTimerRunning(false);
     setActiveTimerTaskId(null);
     setTimeLeft(25 * 60);
   };
 
-  // دالة تظبيط الوقت من الأزرار الثابتة أو اليدوي (ممنوع لو التايمر شغال)
+//  set the Pomodoro duration for the current task
   const setTaskDuration = (minutes) => {
     if (isTimerRunning) {
       alert("⚠️ Cannot change duration while a timer is running. Stop the current timer first!");
@@ -334,7 +333,7 @@ function Dashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-ink">Dashboard</h1>
-              <p className="mt-1 text-sm text-muted">Welcome back, {userName || 'Kamal'}. Your deep work streak is at {userStats.streakDays} days.</p>
+              <p className="mt-1 text-sm text-muted">Welcome back, {userName}. Your deep work streak is at {userStats.streakDays} days.</p>
             </div>
           <div className="flex items-center gap-3 relative self-start sm:self-center">
             <div className="relative">

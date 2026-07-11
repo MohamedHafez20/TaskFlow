@@ -4,6 +4,12 @@ import useTaskStore from "../../store/useTaskStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "../Ui/ToastProvider";
 
+const safeText = (value, fallback = "") => {
+  if (typeof value === "string") return value;
+  if (value == null || value instanceof RegExp) return fallback;
+  return String(value);
+};
+
 function TaskCard({ task, setEditingTask }) {
   const deleteTask = useTaskStore((s) => s.deleteTask);
   const toggleTask = useTaskStore((s) => s.toggleTask);
@@ -129,7 +135,7 @@ function TaskCard({ task, setEditingTask }) {
                   : "text-ink"
               }`}
             >
-              {task.title}
+              {safeText(task.title, "Untitled task")}
             </h3>
 
             {/* Metadata */}
@@ -137,7 +143,7 @@ function TaskCard({ task, setEditingTask }) {
               {/* Category */}
               <div className="flex items-center gap-1 bg-hair px-3 py-1 rounded-full">
                 <FaTag className="text-blue-400 text-xs" />
-                <span className="text-sub capitalize">{task.category || "general"}</span>
+                <span className="text-sub capitalize">{safeText(task.category, "general")}</span>
               </div>
 
               {/* Priority */}
@@ -146,14 +152,14 @@ function TaskCard({ task, setEditingTask }) {
               >
                 <FaFire className={priorityTextColors[task.priority] + " text-xs"} />
                 <span className={`capitalize ${priorityTextColors[task.priority]}`}>
-                  {task.priority || "medium"}
+                  {safeText(task.priority, "medium")}
                 </span>
               </div>
 
               {/* Estimated Time */}
               <div className="flex items-center gap-1 bg-hair px-3 py-1 rounded-full text-sub">
                 <FaClock className="text-purple-400 text-xs" />
-                <span>{task.estimatedTime || "1h"}</span>
+                <span>{safeText(task.estimatedTime, "1h")}</span>
               </div>
             </div>
 
