@@ -5,8 +5,11 @@ import { FaCheckCircle, FaTimesCircle, FaSpinner, FaArrowLeft, FaEnvelope } from
 import useUserStore from '../../store/useUserStore';
 import { useToast } from '../../components/Ui/ToastProvider';
 import BackgroundWrapper from '../../components/layout/BackgroundWrapper';
+import usePageTitle from '../../hooks/usePageTitle';
+import taskFlowLogo from '../../assets/reg.log.png';
 
 function VerifyEmail() {
+  usePageTitle('Verify Email');
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
@@ -18,11 +21,13 @@ function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState(Array(6).fill(''));
   const inputsRef = useRef([]);
-
+console.log(process.env.RESEND_API_KEY);
   useEffect(() => {
     const stateEmail = location.state?.email || '';
     if (stateEmail) {
       setEmail(stateEmail);
+      setStatus('sent');
+      setMessage(`Verification code sent to ${stateEmail}. Enter it below.`);
     }
   }, [location.state]);
 
@@ -98,7 +103,21 @@ function VerifyEmail() {
         <FaArrowLeft size={10} className="text-purple-400" /> Back to Login
       </Link>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[520px] rounded-[32px] border border-hair bg-card p-8 shadow-2xl relative z-10">
+      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[1.3fr_440px] gap-8 items-center relative z-10">
+        <motion.section
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="hidden lg:flex items-center justify-center rounded-[32px] h-[520px] relative overflow-hidden"
+        >
+          <img
+            src={taskFlowLogo}
+            alt="Background Visual"
+            className="absolute inset-0 w-full h-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10]/60 to-transparent z-0" />
+        </motion.section>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full mx-auto max-w-[520px] rounded-[32px] border border-hair bg-card p-8 shadow-2xl relative z-10">
         <div className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl ${status === 'success' ? 'bg-emerald-500' : status === 'error' || status === 'expired' ? 'bg-rose-500' : 'bg-gradient-to-r from-purple-600 to-indigo-600'} text-white shadow-lg`}>
           {status === 'loading' ? (
             <FaSpinner className="animate-spin" size={24} />
@@ -176,6 +195,7 @@ function VerifyEmail() {
           </button>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 }

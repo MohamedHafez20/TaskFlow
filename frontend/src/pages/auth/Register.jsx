@@ -53,8 +53,8 @@ function Register() {
     const response = await registerUser({ name: name.trim(), email: email.trim(), password });
     setIsLoading(false);
     if (response.success) {
-      showToast(response.message || 'Account created. Please verify your email.', 'success');
-      navigate('/check-your-email', { state: { email: response.email || email.trim() } });
+      showToast(response.message || 'Account created. Verification code sent.', 'success');
+      navigate('/verify-email', { state: { email: response.email || email.trim() } });
     } else {
       showToast(response.message || 'Registration failed. Try again.', 'error');
     }
