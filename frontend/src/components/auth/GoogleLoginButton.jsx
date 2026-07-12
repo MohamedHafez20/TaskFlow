@@ -50,7 +50,7 @@ function GoogleLoginButton({ onSuccess, disabled = false, loading = false }) {
           type="button"
           disabled={disabled || loading || renderProps.disabled}
           onClick={renderProps.onClick}
-          className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-xs font-black uppercase tracking-widest text-slate-900 shadow-lg transition-all duration-200 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
             {loading ? <FaSpinner className="animate-spin text-slate-700 text-sm" /> : <FcGoogle className="text-lg" />}

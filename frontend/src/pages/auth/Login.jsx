@@ -37,7 +37,7 @@ function Login() {
     const response = await loginUser({ email: email.trim(), password });
     setIsLoading(false);
     if (response.success) {
-      showToast('Authentication approved. Welcome back!', 'success');
+      showToast('Login or sign successful', 'success');
       navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
     } else {
       showToast(response.message || 'Access denied.', 'error');
@@ -55,7 +55,7 @@ function Login() {
     setIsLoading(false);
 
     if (response.success) {
-      showToast('Signed in with Google successfully.', 'success');
+      showToast('Login or sign successful', 'success');
       navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
     } else {
       showToast(response.message || 'Google sign-in failed.', 'error');

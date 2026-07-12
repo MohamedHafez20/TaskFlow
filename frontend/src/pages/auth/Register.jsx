@@ -53,7 +53,7 @@ function Register() {
     const response = await registerUser({ name: name.trim(), email: email.trim(), password });
     setIsLoading(false);
     if (response.success) {
-      showToast('Account created successfully. Redirecting to the app...', 'success');
+      showToast('Login or sign successful', 'success');
       navigate('/app/dashboard');
     } else {
       showToast(response.message || 'Registration failed. Try again.', 'error');
@@ -71,7 +71,7 @@ function Register() {
     setIsLoading(false);
 
     if (response.success) {
-      showToast('Signed in with Google successfully.', 'success');
+      showToast('Login or sign successful', 'success');
       navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
     } else {
       showToast(response.message || 'Google sign-in failed.', 'error');
