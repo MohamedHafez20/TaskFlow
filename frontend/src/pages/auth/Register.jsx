@@ -7,12 +7,14 @@ import useUserStore from '../../store/useUserStore';
 import usePageTitle from '../../hooks/usePageTitle';
 import taskFlowLogo from '../../assets/reg.log.png';
 import BackgroundWrapper from '../../components/layout/BackgroundWrapper';
+import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
 
 function Register() {
   usePageTitle('Register');
   const navigate = useNavigate();
   const { showToast } = useToast();
   const registerUser = useUserStore((s) => s.registerUser);
+  const googleLogin = useUserStore((s) => s.googleLogin);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -55,6 +57,24 @@ function Register() {
       navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
     } else {
       showToast(response.message || 'Registration failed. Try again.', 'error');
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    if (!credentialResponse?.credential) {
+      showToast('Google sign-in was cancelled.', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    const response = await googleLogin({ credential: credentialResponse.credential });
+    setIsLoading(false);
+
+    if (response.success) {
+      showToast('Signed in with Google successfully.', 'success');
+      navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
+    } else {
+      showToast(response.message || 'Google sign-in failed.', 'error');
     }
   };
 
@@ -183,6 +203,15 @@ function Register() {
           </form>
 
           <div className="mt-8 pt-6 border-t border-hair space-y-4">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-hair/70 bg-white/5 px-3 py-3">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-muted">
+                <span className="h-px w-8 bg-hair" />
+                OR CONTINUE WITH
+                <span className="h-px w-8 bg-hair" />
+              </div>
+              <GoogleLoginButton onSuccess={handleGoogleSuccess} disabled={isLoading} />
+            </div>
+
             <div className="flex items-center justify-between text-[11px] font-semibold text-muted">
               <div>
                 <span className="text-muted mr-1.5">Already have an account?</span>

@@ -17,6 +17,27 @@ const isoToLocalDatetime = (iso) => {
   return local.toISOString().slice(0, 16);
 };
 
+const NOTES_FALLBACK_KEY = 'taskflow-notes-fallback';
+
+const readFallbackNotes = () => {
+  try {
+    const raw = localStorage.getItem(NOTES_FALLBACK_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeFallbackNotes = (notes) => {
+  try {
+    localStorage.setItem(NOTES_FALLBACK_KEY, JSON.stringify(notes));
+  } catch {
+    // ignore storage errors
+  }
+};
+
 // Map a note document from the API to the shape this page renders.
 const mapNote = (n) => ({
   id: n._id,
@@ -47,10 +68,19 @@ export default function BrainDump() {
     (async () => {
       try {
         const { data } = await api.get('/notes');
-        if (active && Array.isArray(data)) setNotes(data.map(mapNote));
+        if (active && Array.isArray(data)) {
+          const nextNotes = data.map(mapNote);
+          setNotes(nextNotes);
+          writeFallbackNotes(nextNotes);
+        }
       } catch (err) {
         console.error('Failed to load notes', err);
-        showToast(err.response?.data?.message || 'Failed to load notes', 'error');
+        const fallbackNotes = readFallbackNotes();
+        if (active && fallbackNotes.length > 0) {
+          setNotes(fallbackNotes);
+        } else {
+          showToast(err.response?.data?.message || 'Failed to load notes', 'error');
+        }
       }
     })();
     return () => { active = false; };
@@ -77,17 +107,26 @@ export default function BrainDump() {
       if (editingId) {
         const { data } = await api.put(`/notes/${editingId}`, payload);
         const mapped = mapNote(data);
-        setNotes((prev) => prev.map((n) => (n.id === editingId ? mapped : n)));
+        const nextNotes = notes.map((n) => (n.id === editingId ? mapped : n));
+        setNotes(nextNotes);
+        writeFallbackNotes(nextNotes);
         showToast('Note updated', 'success');
       } else {
         const { data } = await api.post('/notes', payload);
-        setNotes((prev) => [mapNote(data), ...prev]);
+        const nextNotes = [mapNote(data), ...notes];
+        setNotes(nextNotes);
+        writeFallbackNotes(nextNotes);
         showToast('Note created', 'success');
       }
       resetForm();
     } catch (err) {
       console.error('Failed to save note', err);
-      showToast(err.response?.data?.message || 'Failed to save note', 'error');
+      const fallbackNotes = editingId
+        ? notes.map((n) => (n.id === editingId ? { ...n, title: payload.title, content: payload.content, tags: payload.tags, noteDate: payload.noteDate, lastEdited: new Date().toISOString() } : n))
+        : [{ id: `local-${Date.now()}`, title: payload.title, content: payload.content, tags: payload.tags, noteDate: payload.noteDate, createdAt: new Date().toISOString(), lastEdited: new Date().toISOString() }, ...notes];
+      setNotes(fallbackNotes);
+      writeFallbackNotes(fallbackNotes);
+      showToast(err.response?.data?.message || 'Saved locally for now', 'error');
     }
   };
 
@@ -110,12 +149,17 @@ export default function BrainDump() {
     // perform deletion (called after inline confirm)
     try {
       await api.delete(`/notes/${id}`);
-      setNotes((prev) => prev.filter((n) => n.id !== id));
+      const nextNotes = notes.filter((n) => n.id !== id);
+      setNotes(nextNotes);
+      writeFallbackNotes(nextNotes);
       showToast('Note deleted', 'success');
       if (editingId === id) resetForm();
     } catch (err) {
       console.error('Failed to delete note', err);
-      showToast(err.response?.data?.message || 'Failed to delete note', 'error');
+      const nextNotes = notes.filter((n) => n.id !== id);
+      setNotes(nextNotes);
+      writeFallbackNotes(nextNotes);
+      showToast(err.response?.data?.message || 'Deleted locally for now', 'error');
     } finally {
       setPendingDeleteId(null);
     }

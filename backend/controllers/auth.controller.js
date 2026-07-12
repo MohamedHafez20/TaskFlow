@@ -1,8 +1,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const asyncHandler = require('../middleware/asyncHandler');
-
+console.log("✅ Google Route Hit");
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'taskflow-dev-secret', {
     expiresIn: process.env.JWT_EXPIRE || '7d',
@@ -16,6 +17,31 @@ const authResponse = (user) => ({
   professionalTitle: user.professionalTitle || 'Deep Worker',
   token: generateToken(user._id),
 });
+
+const verifyGoogleToken = async (credential) => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new Error('Google authentication is not configured');
+  }
+
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload?.email) {
+    throw new Error('Google email is not available');
+  }
+
+  return {
+    googleId: payload.sub,
+    name: payload.name || payload.given_name || 'Google User',
+    email: payload.email,
+    avatar: payload.picture || '',
+  };
+};
 
 const updateLoginActivity = async (user) => {
   const now = new Date();
@@ -79,7 +105,7 @@ const login = asyncHandler(async (req, res) => {
   const normalizedEmail = email.trim().toLowerCase();
   const user = await User.findOne({ email: normalizedEmail });
 
-  if (user && (await bcrypt.compare(password, user.password))) {
+  if (user && user.password && (await bcrypt.compare(password, user.password))) {
     await updateLoginActivity(user);
     res.json(authResponse(user));
     return;
@@ -87,6 +113,48 @@ const login = asyncHandler(async (req, res) => {
 
   res.status(401);
   throw new Error('Invalid email or password');
+});
+
+const googleLogin = asyncHandler(async (req, res) => {
+  const { credential } = req.body;
+console.log("✅ Google route reached");
+  if (!credential) {
+    res.status(400);
+    throw new Error('Google credential is required');
+  }
+
+  const { googleId, name, email, avatar } = await verifyGoogleToken(credential);
+  const normalizedEmail = email.trim().toLowerCase();
+
+  let user = await User.findOne({ email: normalizedEmail });
+
+  if (user) {
+    const updates = {};
+
+    if (!user.googleId) updates.googleId = googleId;
+    if (!user.name && name) updates.name = name;
+    if (!user.avatarUrl && avatar) updates.avatarUrl = avatar;
+    if (avatar && user.avatarUrl !== avatar) updates.avatarUrl = avatar;
+
+    if (Object.keys(updates).length > 0) {
+      user = await User.findByIdAndUpdate(user._id, updates, { new: true, runValidators: true });
+    }
+
+    await updateLoginActivity(user);
+    res.json(authResponse(user));
+    return;
+  }
+
+  const createdUser = await User.create({
+    name,
+    email: normalizedEmail,
+    googleId,
+    avatarUrl: avatar,
+    password: '',
+  });
+
+  await updateLoginActivity(createdUser);
+  res.status(201).json(authResponse(createdUser));
 });
 
 const getMe = asyncHandler(async (req, res) => {
@@ -178,4 +246,4 @@ const forgotPassword = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, getMe, updateMe, changePassword, forgotPassword };
+module.exports = { register, login, googleLogin, getMe, updateMe, changePassword, forgotPassword };

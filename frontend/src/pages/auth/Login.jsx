@@ -7,12 +7,14 @@ import useUserStore from '../../store/useUserStore';
 import usePageTitle from '../../hooks/usePageTitle';
 import taskFlowLogo from '../../assets/reg.log.png'; // تأكد من مسار الصورة عندك
 import BackgroundWrapper from '../../components/layout/BackgroundWrapper';
+import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
 
 function Login() {
   usePageTitle('Login');
   const navigate = useNavigate();
   const { showToast } = useToast();
   const loginUser = useUserStore((s) => s.loginUser);
+  const googleLogin = useUserStore((s) => s.googleLogin);
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
 
   const [email, setEmail] = useState('');
@@ -42,6 +44,25 @@ function Login() {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    if (!credentialResponse?.credential) {
+      showToast('Google sign-in was cancelled.', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    const response = await googleLogin({ credential: credentialResponse.credential });
+    setIsLoading(false);
+
+    if (response.success) {
+      showToast('Signed in with Google successfully.', 'success');
+      navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
+    } else {
+      showToast(response.message || 'Google sign-in failed.', 'error');
+    }
+  };
+  console.log("API URL:", import.meta.env.VITE_API_URL);
+console.log("DEV:", import.meta.env.DEV);
   return (
     <div className="min-h-screen bg-transparent text-sub flex items-center justify-center p-4 md:p-8 relative overflow-hidden antialiased font-sans select-none">
       <BackgroundWrapper />
@@ -125,6 +146,15 @@ function Login() {
           </form>
 
           <div className="mt-8 pt-6 border-t border-hair space-y-4">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-hair/70 bg-white/5 px-3 py-3">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-muted">
+                <span className="h-px w-8 bg-hair" />
+                OR CONTINUE WITH
+                <span className="h-px w-8 bg-hair" />
+              </div>
+              <GoogleLoginButton onSuccess={handleGoogleSuccess} disabled={isLoading} />
+            </div>
+
             <div className="flex items-center justify-between text-[11px] font-semibold text-muted">
               <Link to="/register" className="text-purple-400 hover:text-purple-300">Create Account</Link>
               <Link to="/forgot-password" className="text-muted hover:text-purple-300 transition-colors">Forgot Password?</Link>

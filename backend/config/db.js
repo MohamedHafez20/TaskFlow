@@ -20,7 +20,7 @@ const connectDB = async () => {
       console.log('MongoDB memory server connected');
     } catch (memoryErr) {
       console.error('MongoDB memory server failed:', memoryErr.message);
-      process.exit(1);
+      console.warn('Falling back to in-memory mode without database persistence');
     }
   }
 };

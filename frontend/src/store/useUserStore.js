@@ -110,6 +110,32 @@ const useUserStore = create(
         }
       },
 
+      googleLogin: async ({ credential }) => {
+        try {
+          const { data } = await api.post('/auth/google', { credential });
+          if (data && data.token) {
+            localStorage.setItem('token', data.token);
+            set({
+              userName: normalizeText(data.name, ""),
+              userEmail: normalizeText(data.email, ""),
+              avatarUrl: normalizeText(data.avatarUrl, ""),
+              professionalTitle: normalizeText(data.professionalTitle, "Deep Worker"),
+              isAuthenticated: true,
+              preferences: data.preferences || {
+                autoStartBreaks: true,
+                soundNotifications: true,
+                deepFocusMood: false
+              }
+            });
+            return { success: true };
+          }
+          return { success: false, message: 'Google sign-in failed: Invalid response' };
+        } catch (err) {
+          const msg = err.response?.data?.message || 'Google sign-in failed.';
+          return { success: false, message: msg };
+        }
+      },
+
       fetchCurrentUser: async () => {
         const token = localStorage.getItem('token');
         if (!token) return;
