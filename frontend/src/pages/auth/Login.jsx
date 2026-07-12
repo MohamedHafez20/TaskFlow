@@ -141,7 +141,7 @@ console.log("DEV:", import.meta.env.DEV);
               disabled={isLoading}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2 mt-4"
             >
-              {isLoading ? <><FaSpinner className="animate-spin" /> Verifying...</> : 'Login '}
+              {isLoading ? <><FaSpinner className="animate-spin" /> Logging in...</> : 'Login '}
             </button>
           </form>
 

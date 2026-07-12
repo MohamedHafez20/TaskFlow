@@ -61,8 +61,21 @@ const useUserStore = create(
       registerUser: async ({ name, email, password }) => {
         try {
           const { data } = await api.post('/auth/register', { name, email, password });
-          if (data?.success) {
-            return { success: true, message: data.message, email: data.email || email };
+          if (data && data.token) {
+            localStorage.setItem('token', data.token);
+            set({
+              userName: normalizeText(data.name, ""),
+              userEmail: normalizeText(data.email, ""),
+              avatarUrl: normalizeText(data.avatarUrl, ""),
+              professionalTitle: normalizeText(data.professionalTitle, "Deep Worker"),
+              isAuthenticated: true,
+              preferences: data.preferences || {
+                autoStartBreaks: true,
+                soundNotifications: true,
+                deepFocusMood: false,
+              },
+            });
+            return { success: true };
           }
           return { success: false, message: data?.message || 'Registration failed: Invalid response' };
         } catch (err) {
@@ -119,26 +132,6 @@ const useUserStore = create(
           return { success: false, message: 'Google sign-in failed: Invalid response' };
         } catch (err) {
           const msg = err.response?.data?.message || 'Google sign-in failed.';
-          return { success: false, message: msg };
-        }
-      },
-
-      verifyEmail: async ({ email, code }) => {
-        try {
-          const { data } = await api.post('/auth/verify-email', { email, code });
-          return { success: true, message: data.message };
-        } catch (err) {
-          const msg = err.response?.data?.message || 'Verification failed.';
-          return { success: false, message: msg };
-        }
-      },
-
-      resendVerification: async (email) => {
-        try {
-          const { data } = await api.post('/auth/resend-verification', { email });
-          return { success: true, message: data.message };
-        } catch (err) {
-          const msg = err.response?.data?.message || 'Unable to resend verification email.';
           return { success: false, message: msg };
         }
       },

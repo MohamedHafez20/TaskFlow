@@ -1,10 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const asyncHandler = require('../middleware/asyncHandler');
-const { createVerificationCode, hashToken, sendVerificationEmail } = require('../services/emailService');
 console.log("✅ Google Route Hit");
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'taskflow-dev-secret', {
@@ -90,55 +88,15 @@ const register = asyncHandler(async (req, res) => {
 
   const salt = await bcrypt.genSalt(10);
   const hashed = await bcrypt.hash(password, salt);
-  const verificationCode = createVerificationCode();
   const user = await User.create({
     name,
     email: normalizedEmail,
     password: hashed,
-    isVerified: false,
-    verificationCode: hashToken(verificationCode),
-    verificationCodeExpires: new Date(Date.now() + 10 * 60 * 1000),
   });
 
-  try {
-    await sendVerificationEmail({
-      to: user.email,
-      name: user.name,
-      code: verificationCode,
-    });
-  } catch (emailError) {
-  console.error("❌ Verification email failed");
-  console.error(emailError);
+  await updateLoginActivity(user);
 
-  if (emailError?.message) {
-    console.error("Message:", emailError.message);
-  }
-
-  if (emailError?.statusCode) {
-    console.error("Status:", emailError.statusCode);
-  }
-
-  if (emailError?.response) {
-    console.error("Response:", emailError.response);
-  }
-
-  if (emailError?.cause) {
-    console.error("Cause:", emailError.cause);
-  }
-
-  user.verificationCode = "";
-  user.verificationCodeExpires = null;
-  await user.save();
-
-  res.status(502);
-  throw new Error("Unable to send verification email. Please try again.");
-}
-
-  res.status(201).json({
-    success: true,
-    message: 'Verification code sent successfully.',
-    email: user.email,
-  });
+  res.status(201).json(authResponse(user));
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -153,11 +111,6 @@ const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: normalizedEmail });
 
   if (user && user.password && (await bcrypt.compare(password, user.password))) {
-    if (!user.isVerified) {
-      res.status(403);
-      throw new Error('Please verify your email before logging in.');
-    }
-
     await updateLoginActivity(user);
     res.json(authResponse(user));
     return;
@@ -187,11 +140,6 @@ console.log("✅ Google route reached");
     if (!user.name && name) updates.name = name;
     if (!user.avatarUrl && avatar) updates.avatarUrl = avatar;
     if (avatar && user.avatarUrl !== avatar) updates.avatarUrl = avatar;
-    if (!user.isVerified) {
-      updates.isVerified = true;
-      updates.verificationCode = '';
-      updates.verificationCodeExpires = null;
-    }
 
     if (Object.keys(updates).length > 0) {
       user = await User.findByIdAndUpdate(user._id, updates, { new: true, runValidators: true });
@@ -208,86 +156,10 @@ console.log("✅ Google route reached");
     googleId,
     avatarUrl: avatar,
     password: '',
-    isVerified: true,
-    verificationCode: '',
-    verificationCodeExpires: null,
   });
 
   await updateLoginActivity(createdUser);
   res.status(201).json(authResponse(createdUser));
-});
-
-const verifyEmail = asyncHandler(async (req, res) => {
-  const { email, code } = req.body;
-
-  if (!email || !code) {
-    res.status(400);
-    throw new Error('Email and verification code are required');
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
-  const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
-  const user = await User.findOne({
-    email: normalizedEmail,
-    verificationCode: hashedCode,
-    verificationCodeExpires: { $gt: Date.now() },
-  });
-
-  if (!user) {
-    res.status(400);
-    const hasExpired = await User.findOne({
-      email: normalizedEmail,
-      verificationCodeExpires: { $lte: Date.now() },
-    });
-    if (hasExpired) {
-      throw new Error('Verification code expired.');
-    }
-    throw new Error('Invalid verification code.');
-  }
-
-  if (user.isVerified) {
-    res.status(400);
-    throw new Error('Email is already verified');
-  }
-
-  user.isVerified = true;
-  user.verificationCode = '';
-  user.verificationCodeExpires = null;
-  await user.save();
-
-  res.json({ success: true, message: 'Email verified successfully' });
-});
-
-const resendVerification = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    res.status(400);
-    throw new Error('Please provide email address');
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
-  const user = await User.findOne({ email: normalizedEmail });
-
-  if (!user) {
-    res.status(404);
-    throw new Error('User with this email does not exist');
-  }
-
-  if (user.isVerified) {
-    res.status(400);
-    throw new Error('This email is already verified');
-  }
-
-  const verificationCode = createVerificationCode();
-
-  user.verificationCode = hashToken(verificationCode);
-  user.verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
-  await user.save();
-
-  await sendVerificationEmail({ to: user.email, name: user.name, code: verificationCode });
-
-  res.json({ success: true, message: 'Verification code sent successfully' });
 });
 
 const getMe = asyncHandler(async (req, res) => {
@@ -379,4 +251,4 @@ const forgotPassword = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, googleLogin, verifyEmail, resendVerification, getMe, updateMe, changePassword, forgotPassword };
+module.exports = { register, login, googleLogin, getMe, updateMe, changePassword, forgotPassword };
