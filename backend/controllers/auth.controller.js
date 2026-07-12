@@ -1,8 +1,10 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const asyncHandler = require('../middleware/asyncHandler');
+const { createVerificationToken, hashToken, sendVerificationEmail } = require('../services/emailService');
 console.log("✅ Google Route Hit");
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'taskflow-dev-secret', {
@@ -88,10 +90,36 @@ const register = asyncHandler(async (req, res) => {
 
   const salt = await bcrypt.genSalt(10);
   const hashed = await bcrypt.hash(password, salt);
-  const user = await User.create({ name, email: normalizedEmail, password: hashed });
-  await updateLoginActivity(user);
+  const verificationToken = createVerificationToken();
+  const user = await User.create({
+    name,
+    email: normalizedEmail,
+    password: hashed,
+    isVerified: false,
+    verificationToken: hashToken(verificationToken),
+    verificationTokenExpires: new Date(Date.now() + 15 * 60 * 1000),
+  });
 
-  res.status(201).json(authResponse(user));
+  try {
+    await sendVerificationEmail({
+      to: user.email,
+      name: user.name,
+      token: verificationToken,
+    });
+  } catch (emailError) {
+    console.error('Verification email failed:', emailError);
+    user.verificationToken = '';
+    user.verificationTokenExpires = null;
+    await user.save();
+    res.status(502);
+    throw new Error('Unable to send verification email. Please try again.');
+  }
+
+  res.status(201).json({
+    success: true,
+    message: 'Registration successful. Please check your email to verify your account.',
+    email: user.email,
+  });
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -106,6 +134,11 @@ const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: normalizedEmail });
 
   if (user && user.password && (await bcrypt.compare(password, user.password))) {
+    if (!user.isVerified) {
+      res.status(403);
+      throw new Error('Please verify your email before logging in.');
+    }
+
     await updateLoginActivity(user);
     res.json(authResponse(user));
     return;
@@ -135,6 +168,11 @@ console.log("✅ Google route reached");
     if (!user.name && name) updates.name = name;
     if (!user.avatarUrl && avatar) updates.avatarUrl = avatar;
     if (avatar && user.avatarUrl !== avatar) updates.avatarUrl = avatar;
+    if (!user.isVerified) {
+      updates.isVerified = true;
+      updates.verificationToken = '';
+      updates.verificationTokenExpires = null;
+    }
 
     if (Object.keys(updates).length > 0) {
       user = await User.findByIdAndUpdate(user._id, updates, { new: true, runValidators: true });
@@ -151,10 +189,77 @@ console.log("✅ Google route reached");
     googleId,
     avatarUrl: avatar,
     password: '',
+    isVerified: true,
+    verificationToken: '',
+    verificationTokenExpires: null,
   });
 
   await updateLoginActivity(createdUser);
   res.status(201).json(authResponse(createdUser));
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    res.status(400);
+    throw new Error('Verification token is required');
+  }
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  const user = await User.findOne({
+    verificationToken: hashedToken,
+    verificationTokenExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error('Invalid or expired verification token');
+  }
+
+  if (user.isVerified) {
+    res.status(400);
+    throw new Error('Email is already verified');
+  }
+
+  user.isVerified = true;
+  user.verificationToken = '';
+  user.verificationTokenExpires = null;
+  await user.save();
+
+  res.json({ success: true, message: 'Email verified successfully' });
+});
+
+const resendVerification = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400);
+    throw new Error('Please provide email address');
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User with this email does not exist');
+  }
+
+  if (user.isVerified) {
+    res.status(400);
+    throw new Error('This email is already verified');
+  }
+
+  const verificationToken = createVerificationToken();
+
+  user.verificationToken = hashToken(verificationToken);
+  user.verificationTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
+  await user.save();
+
+  await sendVerificationEmail({ to: user.email, name: user.name, token: verificationToken });
+
+  res.json({ success: true, message: 'Verification email sent successfully' });
 });
 
 const getMe = asyncHandler(async (req, res) => {
@@ -246,4 +351,4 @@ const forgotPassword = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, googleLogin, getMe, updateMe, changePassword, forgotPassword };
+module.exports = { register, login, googleLogin, verifyEmail, resendVerification, getMe, updateMe, changePassword, forgotPassword };

@@ -87,7 +87,7 @@ function ForgotPassword() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
+                    placeholder="kamal@example.com"
                     className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-card2 text-ink placeholder-faint border border-hair focus:border-purple-500/50 outline-none text-xs font-semibold transition-all"
                     required
                   />

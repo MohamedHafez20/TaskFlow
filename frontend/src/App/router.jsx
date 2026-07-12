@@ -20,6 +20,8 @@ const Chatbot = lazy(() => import("../pages/Chatbot"));
 const Login = lazy(() => import("../pages/auth/Login"));
 const Register = lazy(() => import("../pages/auth/Register"));
 const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
+const CheckYourEmail = lazy(() => import("../pages/auth/CheckYourEmail"));
+const VerifyEmail = lazy(() => import("../pages/auth/VerifyEmail"));
 const Home = lazy(() => import("../pages/Home"));
 const ProtectedRoute = lazy(() => import("./ProtectedRoute"));
 const Layout = lazy(() => import("../components/layout/Layout"));
@@ -44,6 +46,14 @@ const router = createBrowserRouter([
   {
     path: "/forgot-password",
     element: <ForgotPassword />
+  },
+  {
+    path: "/check-your-email",
+    element: <CheckYourEmail />
+  },
+  {
+    path: "/verify-email",
+    element: <VerifyEmail />
   },
   {
     path: "/app",

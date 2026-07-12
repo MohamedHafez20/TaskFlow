@@ -53,8 +53,8 @@ function Register() {
     const response = await registerUser({ name: name.trim(), email: email.trim(), password });
     setIsLoading(false);
     if (response.success) {
-      showToast('Account initialized successfully. Welcome!', 'success');
-      navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
+      showToast(response.message || 'Account created. Please verify your email.', 'success');
+      navigate('/check-your-email', { state: { email: response.email || email.trim() } });
     } else {
       showToast(response.message || 'Registration failed. Try again.', 'error');
     }
@@ -202,11 +202,11 @@ function Register() {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-hair space-y-4">
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-hair/70 bg-white/5 px-3 py-3">
+          <div className="mt-2 pt-2 space-y-4">
+            <div className="flex flex-col items-center gap-3 rounded-2xlpx-3 py-3">
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-muted">
                 <span className="h-px w-8 bg-hair" />
-                OR CONTINUE WITH
+                Or
                 <span className="h-px w-8 bg-hair" />
               </div>
               <GoogleLoginButton onSuccess={handleGoogleSuccess} disabled={isLoading} />

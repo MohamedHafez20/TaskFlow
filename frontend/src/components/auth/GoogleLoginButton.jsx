@@ -20,20 +20,12 @@ function GoogleLoginButton({ onSuccess, disabled = false, loading = false }) {
         transition={{ duration: 0.2 }}
         type="button"
         disabled={disabled || loading}
-        className="group relative w-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 backdrop-blur-xl transition-all duration-300 hover:border-purple-500/40 hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
+        className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm">
-              {loading ? <FaSpinner className="animate-spin text-gray-700 text-lg" /> : <FcGoogle className="text-2xl" />}
-            </div>
-            <div className="text-left">
-              <h3 className="text-sm font-bold text-white">{loading ? 'Signing in...' : 'Continue with Google'}</h3>
-              <p className="mt-0.5 text-[11px] text-gray-400">Google Client ID is not configured yet</p>
-            </div>
-          </div>
-          <FaArrowRight className="text-gray-400 transition-all duration-300 group-hover:translate-x-1 group-hover:text-purple-400" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+          {loading ? <FaSpinner className="animate-spin text-slate-700 text-sm" /> : <FcGoogle className="text-lg" />}
         </div>
+        <span>{loading ? 'Signing in...' : 'Continue with Google'}</span>
       </motion.button>
     );
   }
@@ -58,20 +50,12 @@ function GoogleLoginButton({ onSuccess, disabled = false, loading = false }) {
           type="button"
           disabled={disabled || loading || renderProps.disabled}
           onClick={renderProps.onClick}
-          className="group relative w-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 backdrop-blur-xl transition-all duration-300 hover:border-purple-500/40 hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
+          className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm">
-                {loading ? <FaSpinner className="animate-spin text-gray-700 text-lg" /> : <FcGoogle className="text-2xl" />}
-              </div>
-              <div className="text-left">
-                <h3 className="text-sm font-bold text-white">{loading ? 'Signing in...' : 'Continue with Google'}</h3>
-                <p className="mt-0.5 text-[11px] text-gray-400">Secure Google Authentication</p>
-              </div>
-            </div>
-            <FaArrowRight className="text-gray-400 transition-all duration-300 group-hover:translate-x-1 group-hover:text-purple-400" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+            {loading ? <FaSpinner className="animate-spin text-slate-700 text-sm" /> : <FcGoogle className="text-lg" />}
           </div>
+          <span>{loading ? 'Signing in...' : 'Continue with Google'}</span>
         </motion.button>
       )}
     />
