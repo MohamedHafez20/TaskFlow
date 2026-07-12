@@ -21,7 +21,7 @@ function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState(Array(6).fill(''));
   const inputsRef = useRef([]);
-console.log(process.env.RESEND_API_KEY);
+// console.log(process.env.RESEND_API_KEY);
   useEffect(() => {
     const stateEmail = location.state?.email || '';
     if (stateEmail) {

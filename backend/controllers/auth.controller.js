@@ -107,13 +107,32 @@ const register = asyncHandler(async (req, res) => {
       code: verificationCode,
     });
   } catch (emailError) {
-    console.error('Verification email failed:', emailError);
-    user.verificationCode = '';
-    user.verificationCodeExpires = null;
-    await user.save();
-    res.status(502);
-    throw new Error('Unable to send verification email. Please try again.');
+  console.error("❌ Verification email failed");
+  console.error(emailError);
+
+  if (emailError?.message) {
+    console.error("Message:", emailError.message);
   }
+
+  if (emailError?.statusCode) {
+    console.error("Status:", emailError.statusCode);
+  }
+
+  if (emailError?.response) {
+    console.error("Response:", emailError.response);
+  }
+
+  if (emailError?.cause) {
+    console.error("Cause:", emailError.cause);
+  }
+
+  user.verificationCode = "";
+  user.verificationCodeExpires = null;
+  await user.save();
+
+  res.status(502);
+  throw new Error("Unable to send verification email. Please try again.");
+}
 
   res.status(201).json({
     success: true,

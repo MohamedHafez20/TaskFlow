@@ -1,9 +1,11 @@
-const crypto = require('crypto');
-const { Resend } = require('resend');
+const crypto = require("crypto");
+const { Resend } = require("resend");
 
-const createVerificationCode = () => String(Math.floor(100000 + Math.random() * 900000));
+const createVerificationCode = () =>
+  String(Math.floor(100000 + Math.random() * 900000));
 
-const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+const hashToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
 
 const buildVerificationEmailHtml = ({ name, code, expiresInMinutes = 10 }) => `
 <!DOCTYPE html>
@@ -42,21 +44,30 @@ const buildVerificationEmailHtml = ({ name, code, expiresInMinutes = 10 }) => `
 `;
 
 const sendVerificationEmail = async ({ to, name, code }) => {
-  const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+  try {
+    console.log("========== RESEND ==========");
+    console.log("To:", to);
+    console.log("From:", process.env.EMAIL_FROM);
+    console.log("API Exists:", !!process.env.RESEND_API_KEY);
 
-  if (!resend) {
-    throw new Error('Email service is not configured');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const response = await resend.emails.send({
+      from: process.env.EMAIL_FROM || "TaskFlow <onboarding@resend.dev>",
+      to,
+      subject: "Your TaskFlow verification code",
+      html: buildVerificationEmailHtml({ name, code }),
+    });
+
+    console.log("✅ Resend Response:");
+    console.dir(response, { depth: null });
+
+    return response;
+  } catch (err) {
+    console.error("❌ RESEND ERROR");
+    console.error(err);
+    throw err;
   }
-
-  const from = process.env.EMAIL_FROM || 'TaskFlow <onboarding@resend.dev>';
-  const response = await resend.emails.send({
-    from,
-    to: [to],
-    subject: 'Your TaskFlow verification code',
-    html: buildVerificationEmailHtml({ name, code }),
-  });
-
-  return { success: true, data: response };
 };
 
 module.exports = {
