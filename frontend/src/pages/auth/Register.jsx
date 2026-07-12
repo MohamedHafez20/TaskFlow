@@ -53,7 +53,7 @@ function Register() {
     const response = await registerUser({ name: name.trim(), email: email.trim(), password });
     setIsLoading(false);
     if (response.success) {
-      showToast('Login or sign successful', 'success');
+      showToast('Sign up successful', 'success');
       navigate('/app/dashboard');
     } else {
       showToast(response.message || 'Registration failed. Try again.', 'error');
@@ -61,6 +61,11 @@ function Register() {
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    if (credentialResponse?.error) {
+      showToast('Google sign-in could not be started. Please make sure the Google client is configured for this domain.', 'error');
+      return;
+    }
+
     if (!credentialResponse?.credential) {
       showToast('Google sign-in was cancelled.', 'error');
       return;
@@ -71,7 +76,7 @@ function Register() {
     setIsLoading(false);
 
     if (response.success) {
-      showToast('Login or sign successful', 'success');
+      showToast('Sign up successful', 'success');
       navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
     } else {
       showToast(response.message || 'Google sign-in failed.', 'error');

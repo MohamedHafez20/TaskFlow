@@ -37,7 +37,7 @@ function Login() {
     const response = await loginUser({ email: email.trim(), password });
     setIsLoading(false);
     if (response.success) {
-      showToast('Login or sign successful', 'success');
+      showToast('Login successful', 'success');
       navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
     } else {
       showToast(response.message || 'Access denied.', 'error');
@@ -45,6 +45,11 @@ function Login() {
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    if (credentialResponse?.error) {
+      showToast('Google sign-in could not be started. Please make sure the Google client is configured for this domain.', 'error');
+      return;
+    }
+
     if (!credentialResponse?.credential) {
       showToast('Google sign-in was cancelled.', 'error');
       return;
@@ -55,7 +60,7 @@ function Login() {
     setIsLoading(false);
 
     if (response.success) {
-      showToast('Login or sign successful', 'success');
+      showToast('Login successful', 'success');
       navigate(sessionStorage.getItem('reviewIntent') ? '/' : '/app/dashboard');
     } else {
       showToast(response.message || 'Google sign-in failed.', 'error');

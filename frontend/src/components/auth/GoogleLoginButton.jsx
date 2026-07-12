@@ -3,12 +3,17 @@ import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import { FaArrowRight, FaSpinner } from 'react-icons/fa';
 
-function GoogleLoginButton({ onSuccess, disabled = false, loading = false }) {
+function GoogleLoginButton({ onSuccess, disabled = false, loading = false, onError }) {
   const hasGoogleClientId = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID || import.meta.env.GOOGLE_CLIENT_ID);
 
-  const handleError = () => {
+  const handleError = (error) => {
+    if (typeof onError === 'function') {
+      onError(error);
+      return;
+    }
+
     if (typeof onSuccess === 'function') {
-      onSuccess({ credential: null });
+      onSuccess({ credential: null, error });
     }
   };
 
