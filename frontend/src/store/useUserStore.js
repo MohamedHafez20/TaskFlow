@@ -123,9 +123,9 @@ const useUserStore = create(
         }
       },
 
-      verifyEmail: async (token) => {
+      verifyEmail: async ({ email, code }) => {
         try {
-          const { data } = await api.post('/auth/verify-email', { token });
+          const { data } = await api.post('/auth/verify-email', { email, code });
           return { success: true, message: data.message };
         } catch (err) {
           const msg = err.response?.data?.message || 'Verification failed.';

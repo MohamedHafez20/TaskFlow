@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const asyncHandler = require('../middleware/asyncHandler');
-const { createVerificationToken, hashToken, sendVerificationEmail } = require('../services/emailService');
+const { createVerificationCode, hashToken, sendVerificationEmail } = require('../services/emailService');
 console.log("✅ Google Route Hit");
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'taskflow-dev-secret', {
@@ -90,26 +90,26 @@ const register = asyncHandler(async (req, res) => {
 
   const salt = await bcrypt.genSalt(10);
   const hashed = await bcrypt.hash(password, salt);
-  const verificationToken = createVerificationToken();
+  const verificationCode = createVerificationCode();
   const user = await User.create({
     name,
     email: normalizedEmail,
     password: hashed,
     isVerified: false,
-    verificationToken: hashToken(verificationToken),
-    verificationTokenExpires: new Date(Date.now() + 15 * 60 * 1000),
+    verificationCode: hashToken(verificationCode),
+    verificationCodeExpires: new Date(Date.now() + 10 * 60 * 1000),
   });
 
   try {
     await sendVerificationEmail({
       to: user.email,
       name: user.name,
-      token: verificationToken,
+      code: verificationCode,
     });
   } catch (emailError) {
     console.error('Verification email failed:', emailError);
-    user.verificationToken = '';
-    user.verificationTokenExpires = null;
+    user.verificationCode = '';
+    user.verificationCodeExpires = null;
     await user.save();
     res.status(502);
     throw new Error('Unable to send verification email. Please try again.');
@@ -117,7 +117,7 @@ const register = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: 'Registration successful. Please check your email to verify your account.',
+    message: 'Verification code sent successfully.',
     email: user.email,
   });
 });
@@ -170,8 +170,8 @@ console.log("✅ Google route reached");
     if (avatar && user.avatarUrl !== avatar) updates.avatarUrl = avatar;
     if (!user.isVerified) {
       updates.isVerified = true;
-      updates.verificationToken = '';
-      updates.verificationTokenExpires = null;
+      updates.verificationCode = '';
+      updates.verificationCodeExpires = null;
     }
 
     if (Object.keys(updates).length > 0) {
@@ -190,8 +190,8 @@ console.log("✅ Google route reached");
     avatarUrl: avatar,
     password: '',
     isVerified: true,
-    verificationToken: '',
-    verificationTokenExpires: null,
+    verificationCode: '',
+    verificationCodeExpires: null,
   });
 
   await updateLoginActivity(createdUser);
@@ -199,22 +199,31 @@ console.log("✅ Google route reached");
 });
 
 const verifyEmail = asyncHandler(async (req, res) => {
-  const { token } = req.body;
+  const { email, code } = req.body;
 
-  if (!token) {
+  if (!email || !code) {
     res.status(400);
-    throw new Error('Verification token is required');
+    throw new Error('Email and verification code are required');
   }
 
-  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  const normalizedEmail = email.trim().toLowerCase();
+  const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
   const user = await User.findOne({
-    verificationToken: hashedToken,
-    verificationTokenExpires: { $gt: Date.now() },
+    email: normalizedEmail,
+    verificationCode: hashedCode,
+    verificationCodeExpires: { $gt: Date.now() },
   });
 
   if (!user) {
     res.status(400);
-    throw new Error('Invalid or expired verification token');
+    const hasExpired = await User.findOne({
+      email: normalizedEmail,
+      verificationCodeExpires: { $lte: Date.now() },
+    });
+    if (hasExpired) {
+      throw new Error('Verification code expired.');
+    }
+    throw new Error('Invalid verification code.');
   }
 
   if (user.isVerified) {
@@ -223,8 +232,8 @@ const verifyEmail = asyncHandler(async (req, res) => {
   }
 
   user.isVerified = true;
-  user.verificationToken = '';
-  user.verificationTokenExpires = null;
+  user.verificationCode = '';
+  user.verificationCodeExpires = null;
   await user.save();
 
   res.json({ success: true, message: 'Email verified successfully' });
@@ -251,15 +260,15 @@ const resendVerification = asyncHandler(async (req, res) => {
     throw new Error('This email is already verified');
   }
 
-  const verificationToken = createVerificationToken();
+  const verificationCode = createVerificationCode();
 
-  user.verificationToken = hashToken(verificationToken);
-  user.verificationTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
+  user.verificationCode = hashToken(verificationCode);
+  user.verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
   await user.save();
 
-  await sendVerificationEmail({ to: user.email, name: user.name, token: verificationToken });
+  await sendVerificationEmail({ to: user.email, name: user.name, code: verificationCode });
 
-  res.json({ success: true, message: 'Verification email sent successfully' });
+  res.json({ success: true, message: 'Verification code sent successfully' });
 });
 
 const getMe = asyncHandler(async (req, res) => {

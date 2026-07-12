@@ -51,17 +51,24 @@ function CheckYourEmail() {
         </div>
         <h2 className="text-center text-2xl font-black text-ink">Check your email</h2>
         <p className="mt-3 text-center text-sm leading-7 text-muted">
-          We sent a verification email to <span className="font-semibold text-purple-400">{email || 'your inbox'}</span>. Open it and click the button to activate your account.
+          We sent a 6-digit verification code to <span className="font-semibold text-purple-400">{email || 'your inbox'}</span>. Enter it on the verification page to activate your account.
         </p>
 
         <div className="mt-8 space-y-3">
           <button
             type="button"
+            onClick={() => navigate('/verify-email', { state: { email } })}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:opacity-90"
+          >
+            Enter Verification Code
+          </button>
+          <button
+            type="button"
             onClick={handleResend}
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-hair bg-card2 px-4 py-3.5 text-xs font-black uppercase tracking-widest text-sub transition-all hover:border-purple-500/40 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? <><FaSpinner className="animate-spin" /> Sending...</> : 'Resend Email'}
+            {loading ? <><FaSpinner className="animate-spin" /> Sending...</> : 'Resend Code'}
           </button>
           <button
             type="button"
