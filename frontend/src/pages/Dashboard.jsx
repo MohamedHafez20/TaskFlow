@@ -742,43 +742,109 @@ function Dashboard() {
       {/*mode */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card/95 backdrop-blur-xl border border-hair p-6 rounded-3xl w-full max-w-xl shadow-2xl relative">
-              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-muted hover:text-ink transition"><FaTimes /></button>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-2.5 w-2.5 rounded-full bg-purple-500 animate-pulse" />
-                <h3 className="text-lg font-bold text-ink">{isEditing ? 'Modify Active Task' : 'Launch New Task'}</h3>
-              </div>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-[10px] uppercase font-bold tracking-wider text-muted mb-2">Task Name</label>
-                  <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="What are you focusing on?" className="w-full bg-card/95 border border-hair rounded-xl px-4 py-3 text-xs text-ink outline-none focus:border-purple-500/50 focus:bg-card transition placeholder:text-faint" />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold tracking-wider text-muted mb-2">Set Priority Level</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { value: 'low', label: 'Low', accent: 'text-emerald-400' },
-                      { value: 'medium', label: 'Medium', accent: 'text-sky-400' },
-                      { value: 'high', label: 'High', accent: 'text-orange-400' },
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setNewPriority(option.value)}
-                        className={`rounded-2xl px-3 py-3 text-xs font-semibold transition-all border ${newPriority === option.value ? 'bg-gradient-to-r from-purple-600 to-indigo-600 border-transparent text-white shadow-lg shadow-purple-500/20' : 'bg-card/90 border-hair text-ink hover:bg-card'}`}
-                      >
-                        <span className={option.accent}>{option.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button type="submit" className="w-full mt-2 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 py-3 text-xs font-bold text-white shadow-lg shadow-purple-500/20 transition hover:opacity-95 tracking-wide">
-                  {isEditing ? 'Save Modifications' : '+ Add to Flow Queue'}
-                </button>
-              </form>
-            </motion.div>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xl p-4">
+  <motion.div
+    initial={{ opacity: 0, scale: 0.92, y: 20 }}
+    animate={{ opacity: 1, scale: 1, y: 0 }}
+    exit={{ opacity: 0, scale: 0.92, y: 20 }}
+    transition={{ duration: 0.25 }}
+    className="relative w-full max-w-xl overflow-hidden rounded-[28px] border border-white/10 bg-card/95 shadow-[0_20px_80px_rgba(0,0,0,.45)] backdrop-blur-2xl"
+  >
+    {/* Glow */}
+    <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-r from-purple-500/20 via-fuchsia-500/20 to-transparent blur-3xl" />
+
+    {/* Close Button */}
+    <button
+      onClick={() => setShowModal(false)}
+      className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-muted transition-all duration-300 hover:bg-white/10 cursor-pointer hover:text-white"
+    >
+      <FaTimes className="text-lg" />
+    </button>
+
+    <div className="relative p-8">
+      {/* Header */}
+      <div className="mb-8 flex items-center gap-4">
+        {/* Icon (Transparent Background) */}
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-transparent">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-7 w-7 text-purple-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12h6m-6 4h6M8 4h8a2 2 0 012 2v12a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2z"
+            />
+          </svg>
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-white">
+            {isEditing ? "Modify Active Task" : "Launch New Task"}
+          </h3>
+          <p className="mt-1 text-xs text-muted">
+            {isEditing ? "Update your task details below." : "Organize your workflow with a new task."}
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Task Name */}
+        <div>
+          <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.25em] text-muted">
+            Task Name
+          </label>
+          <input
+            type="text"
+            required
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="What are you focusing on today?"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white outline-none backdrop-blur-xl transition-all duration-300 placeholder:text-faint focus:border-purple-500 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(168,85,247,.15)]"
+          />
+        </div>
+
+        {/* Priority */}
+        <div>
+          <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.25em] text-muted">
+            Priority Level
+          </label>
+          <div className="relative">
+            <select
+              value={newPriority}
+              onChange={(e) => setNewPriority(e.target.value)}
+              className="w-full appearance-none rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 pr-14 text-sm font-medium text-white outline-none backdrop-blur-xl transition-all duration-300 hover:border-purple-500/40 focus:border-purple-500 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(168,85,247,.15)] cursor-pointer"
+            >
+              <option className="bg-[#18181b] text-white" value="low">🟢 Low Priority</option>
+              <option className="bg-[#18181b] text-white" value="medium">🟡 Medium Priority</option>
+              <option className="bg-[#18181b] text-white" value="high">🔴 High Priority</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-5 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className="group relative mt-2 flex w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 py-4 text-sm font-bold tracking-wide text-white shadow-xl shadow-purple-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-600/40 active:scale-[0.98]"
+        >
+          <span className="absolute inset-0 bg-white/10 opacity-0 transition group-hover:opacity-100"></span>
+          <span className="relative z-10">
+            {isEditing ? "Save Modifications" : "+ Add to Flow Queue"}
+          </span>
+        </button>
+      </form>
+    </div>
+  </motion.div>
+</div>
         )}
       </AnimatePresence>
 

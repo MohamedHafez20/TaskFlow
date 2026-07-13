@@ -37,9 +37,9 @@ function TaskForm({ editingTask, setEditingTask }) {
   ];
 
   const priorities = [
-    { value: "Weak", label: "Low", icon: "↓", color: "text-green-400", bg: "bg-green-500/20", border: "border-green-500/40" },
-    { value: "Medium", label: "Medium", icon: "→", color: "text-yellow-400", bg: "bg-yellow-500/20", border: "border-yellow-500/40" },
-    { value: "Strong", label: "High", icon: "↑", color: "text-red-400", bg: "bg-red-500/20", border: "border-red-500/40" },
+    { value: "Weak", label: "Low", icon: "↓", color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/30", glow: "shadow-emerald-500/10" },
+    { value: "Medium", label: "Medium", icon: "→", color: "text-amber-400", bg: "bg-amber-500/15", border: "border-amber-500/30", glow: "shadow-amber-500/10" },
+    { value: "Strong", label: "High", icon: "↑", color: "text-rose-400", bg: "bg-rose-500/15", border: "border-rose-500/30", glow: "shadow-rose-500/10" },
   ];
 
   const [isCategoryManual, setIsCategoryManual] = useState(false);
@@ -164,45 +164,47 @@ function TaskForm({ editingTask, setEditingTask }) {
               {/* Priority Dropdown */}
               <div className="relative">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => setShowPriorityMenu(!showPriorityMenu)}
                   disabled={isLoading}
-                  className={`flex items-center gap-2 rounded-xl px-3 py-2 border transition-all min-w-0 ${
-                    priorities.find(p => p.value === priority)?.bg + ' ' + priorities.find(p => p.value === priority)?.border + ' ' + priorities.find(p => p.value === priority)?.color
+                  className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-sm font-semibold shadow-sm transition-all min-w-[110px] backdrop-blur-sm ${
+                    priorities.find((p) => p.value === priority)?.bg + ' ' + priorities.find((p) => p.value === priority)?.border + ' ' + priorities.find((p) => p.value === priority)?.color + ' ' + priorities.find((p) => p.value === priority)?.glow
                   }`}
                 >
-                  <FaExclamation className="text-sm" />
-                  <span className="hidden sm:inline text-sm font-semibold">{priorities.find(p => p.value === priority)?.label}</span>
-                  <FaChevronDown className="text-xs" />
+                  <span className="flex items-center gap-2">
+                    <FaExclamation className="text-sm" />
+                    <span>{priorities.find((p) => p.value === priority)?.label}</span>
+                  </span>
+                  <FaChevronDown className="text-xs opacity-80" />
                 </motion.button>
-                
+
                 {/* Priority Menu */}
                 <AnimatePresence>
                   {showPriorityMenu && (
                     <motion.div
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full right-0 mt-2 bg-card/95 border border-hair backdrop-blur-xl rounded-xl shadow-lg z-50 min-w-[140px] overflow-hidden"
+                      initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                      className="absolute top-full right-0 mt-2 w-40 overflow-hidden rounded-2xl border border-hair/80 bg-card/95 p-1.5 shadow-2xl shadow-black/30 backdrop-blur-xl z-50"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {priorities.map((p) => (
                         <motion.button
                           key={p.value}
-                          whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                          whileHover={{ scale: 1.01, backgroundColor: "rgba(255,255,255,0.06)" }}
                           onClick={() => {
                             setPriority(p.value);
                             setShowPriorityMenu(false);
                           }}
-                          className={`w-full px-3 py-2.5 text-left text-sm font-semibold transition-all flex items-center gap-2 ${
+                          className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all ${
                             priority === p.value
                               ? p.bg + ' ' + p.border + ' ' + p.color
                               : 'text-muted hover:text-ink'
                           }`}
                         >
-                          <span className="text-xs">{p.icon}</span>
-                          {p.label}
+                          <span className="text-sm">{p.icon}</span>
+                          <span>{p.label}</span>
                         </motion.button>
                       ))}
                     </motion.div>
