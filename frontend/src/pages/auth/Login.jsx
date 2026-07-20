@@ -46,7 +46,7 @@ function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     if (credentialResponse?.error) {
-      showToast('Google sign-in could not be started. Please make sure the Google client is configured for this domain.', 'error');
+      showToast(credentialResponse.error.message || 'Google sign-in could not be started.', 'error');
       return;
     }
 

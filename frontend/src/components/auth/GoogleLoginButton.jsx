@@ -46,9 +46,31 @@ function GoogleLoginButton({ onSuccess, disabled = false, loading = false, onErr
       return;
     }
 
+    // Clear Google One Tap suppression state cookie to prevent it from blocking the prompt on repeated clicks
+    try {
+      document.cookie = "g_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    } catch (e) {
+      console.warn("Failed to clear g_state cookie:", e);
+    }
+
     window.google.accounts.id.prompt((notification) => {
       if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
-        handleError(new Error('Google sign-in could not be started.'));
+        const reason = notification?.getNotDisplayedReason?.() || 'unknown';
+        const skipped = notification?.isSkippedMoment?.() ? 'skipped' : 'not_displayed';
+        console.warn(`Google One Tap prompt was not displayed. Status: ${skipped}, Reason: ${reason}`);
+        
+        let customMessage = 'Google sign-in could not be started.';
+        if (reason === 'suppressed_by_user') {
+          customMessage = 'Google sign-in was suppressed due to too many dismissals. Please refresh or try again.';
+        } else if (reason === 'unregistered_origin') {
+          customMessage = 'Google client ID error: This domain (origin) is not authorized in Google Cloud Console JavaScript origins.';
+        } else if (reason === 'unknown' && skipped === 'skipped') {
+          customMessage = 'Google sign-in prompt was skipped. Please try again.';
+        } else {
+          customMessage = `Google sign-in failed to start (Reason: ${reason}). Please check if third-party cookies are allowed.`;
+        }
+        
+        handleError(new Error(customMessage));
       }
     });
   };
