@@ -152,22 +152,25 @@ function TaskActivity() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {paginatedTasks.map((task) => (
-                  <tr key={task.id} className="bg-card/90">
-                    <td className="px-4 py-4 align-top max-w-[420px] break-words">
-                      <div className="font-semibold text-ink break-words text-sm sm:text-base">{task.title}</div>
-                      <div className="mt-1 text-sm text-muted break-words">{task.description || '—'}</div>
-                    </td>
-                    <td className="px-4 py-4 align-top text-muted">{task.category || 'General'}</td>
-                    <td className="px-4 py-4 align-top">
-                      <span className={`inline-block rounded-full px-3 py-1 text-[11px] font-black uppercase ${task.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : task.priority === 'medium' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>{task.priority || 'medium'}</span>
-                    </td>
-                    <td className="px-4 py-4 align-top text-sm text-ink">{task.createdAt ? new Date(task.createdAt).toLocaleString() : 'Unknown'}</td>
-                    <td className="px-4 py-4 align-top text-sm text-ink">{task.completed ? (task.completedAt ? new Date(task.completedAt).toLocaleString() : 'Not recorded') : 'Pending'}</td>
-                    <td className="px-4 py-4 align-top text-sm text-muted">{calculateDuration(task.createdAt, task.completedAt)}</td>
-                    {/* Actions removed per design — task activity is read-only */}
-                  </tr>
-                ))}
+                {paginatedTasks.map((task) => {
+                  const completedTime = task.completedAt || (task.completed ? task.updatedAt : null);
+                  return (
+                    <tr key={task.id} className="bg-card/90">
+                      <td className="px-4 py-4 align-top max-w-[420px] break-words">
+                        <div className="font-semibold text-ink break-words text-sm sm:text-base">{task.title}</div>
+                        <div className="mt-1 text-sm text-muted break-words">{task.description || '—'}</div>
+                      </td>
+                      <td className="px-4 py-4 align-top text-muted">{task.category || 'General'}</td>
+                      <td className="px-4 py-4 align-top">
+                        <span className={`inline-block rounded-full px-3 py-1 text-[11px] font-black uppercase ${task.priority === 'high' ? 'bg-orange-500/10 text-orange-400' : task.priority === 'medium' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>{task.priority || 'medium'}</span>
+                      </td>
+                      <td className="px-4 py-4 align-top text-sm text-ink">{task.createdAt ? new Date(task.createdAt).toLocaleString() : 'Unknown'}</td>
+                      <td className="px-4 py-4 align-top text-sm text-ink">{task.completed ? (completedTime ? new Date(completedTime).toLocaleString() : 'Not recorded') : 'Pending'}</td>
+                      <td className="px-4 py-4 align-top text-sm text-muted">{calculateDuration(task.createdAt, completedTime)}</td>
+                      {/* Actions removed per design — task activity is read-only */}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
