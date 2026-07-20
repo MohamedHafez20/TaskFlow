@@ -12,6 +12,40 @@ const getLeaderboard = asyncHandler(async (req, res) => {
   res.json(users);
 });
 
+const refreshDailyStreak = async (userId) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return null;
+  }
+
+  const now = new Date();
+  const lastLoginAt = user.lastLoginAt ? new Date(user.lastLoginAt) : null;
+
+  if (!lastLoginAt) {
+    user.loginStreak = 1;
+  } else {
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+    const startOfLastLogin = new Date(lastLoginAt);
+    startOfLastLogin.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((startOfToday - startOfLastLogin) / 86400000);
+
+    if (diffDays === 0) {
+      user.loginStreak = user.loginStreak || 1;
+    } else if (diffDays === 1) {
+      user.loginStreak = (user.loginStreak || 0) + 1;
+    } else {
+      user.loginStreak = 1;
+    }
+  }
+
+  user.longestLoginStreak = Math.max(user.longestLoginStreak || 0, user.loginStreak || 1);
+  user.lastLoginAt = now;
+  await user.save();
+  return user;
+};
+
 const buildStats = async (userId) => {
   return calculateStats(userId);
 };
@@ -42,6 +76,7 @@ const serializeStats = (stats, earned) => {
 };
 
 const getMyStats = asyncHandler(async (req, res) => {
+  await refreshDailyStreak(req.user._id);
   const stats = await buildStats(req.user._id);
   const earned = BADGES.filter((badge) => badge.check(stats)).map((badge) => badge.id);
   const user = stats.user;

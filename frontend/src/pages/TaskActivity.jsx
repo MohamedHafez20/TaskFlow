@@ -4,6 +4,19 @@ import { FaCalendarAlt, FaCheckCircle, FaClock, FaTasks, FaSortAmountDown, FaSor
 import useTaskStore from '../store/useTaskStore';
 import usePageTitle from '../hooks/usePageTitle';
 
+const calculateDuration = (created, completed) => {
+  if (!created || !completed) return '—';
+  const diffMs = new Date(completed).getTime() - new Date(created).getTime();
+  if (diffMs <= 0) return '0m';
+  
+  const diffMins = Math.round(diffMs / (1000 * 60));
+  if (diffMins < 60) {
+    return `${diffMins}m`;
+  }
+  const diffHours = diffMs / (1000 * 60 * 60);
+  return `${diffHours.toFixed(1)}h`;
+};
+
 function TaskActivity() {
   const tasks = useTaskStore((s) => s.tasks);
   usePageTitle('Task Activity');
@@ -135,7 +148,6 @@ function TaskActivity() {
                   <th className="px-4 py-3">Priority</th>
                   <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3">Completed</th>
-                  <th className="px-4 py-3">Pomodoros</th>
                   <th className="px-4 py-3">Estimate</th>
                 </tr>
               </thead>
@@ -152,8 +164,7 @@ function TaskActivity() {
                     </td>
                     <td className="px-4 py-4 align-top text-sm text-ink">{task.createdAt ? new Date(task.createdAt).toLocaleString() : 'Unknown'}</td>
                     <td className="px-4 py-4 align-top text-sm text-ink">{task.completed ? (task.completedAt ? new Date(task.completedAt).toLocaleString() : 'Not recorded') : 'Pending'}</td>
-                    <td className="px-4 py-4 align-top text-sm text-muted">{task.pomodoroSessions || 0}</td>
-                    <td className="px-4 py-4 align-top text-sm text-muted">{task.estimatedTime || '—'}</td>
+                    <td className="px-4 py-4 align-top text-sm text-muted">{calculateDuration(task.createdAt, task.completedAt)}</td>
                     {/* Actions removed per design — task activity is read-only */}
                   </tr>
                 ))}

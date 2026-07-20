@@ -11,7 +11,7 @@ import useTaskStore from '../store/useTaskStore';
 import useUserStore from '../store/useUserStore';
 import usePageTitle from '../hooks/usePageTitle';
 import { useToast } from '../components/Ui/ToastProvider';
-import { XP_PER_LEVEL, getLevelProgress } from '../constants/gamification';
+import { XP_PER_LEVEL, XP_REWARDS, getLevelProgress, getLevelLabel } from '../constants/gamification';
 import { calculateProductivityScore } from '../utils/helpers';
 
 const formatHours = (minutes) => {
@@ -90,7 +90,7 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, [isTimerRunning, timeLeft, activeTimerTaskId, tasks, updateTask]);
 
-  // دالة تشغيل أو إيقاف التايمر مؤقتاً
+
   const toggleTimer = async (taskId) => {
     if (activeTimerTaskId === taskId) {
       setIsTimerRunning(!isTimerRunning);
@@ -143,12 +143,14 @@ function Dashboard() {
     const completedTasks = tasks.filter((t) => t.completed);
     const completedCount = completedTasks.length;
     const completedRatio = total === 0 ? 0 : completedCount / total;
-    const totalEarnedXp = completedCount * 500;
+    const totalEarnedXp = gamificationStats?.xp ?? 0;
     const levelProgress = getLevelProgress(totalEarnedXp);
     const currentLevel = gamificationStats?.level ?? levelProgress.level;
     const xpInCurrentLevel = gamificationStats?.xpInCurrentLevel ?? levelProgress.xpInLevel;
-    const xpProgressPercentage = total === 0 ? 0 : (xpInCurrentLevel / XP_PER_LEVEL) * 100;
+    const xpToNext = gamificationStats?.xpToNextLevel ?? levelProgress.xpToNext;
+    const xpProgressPercentage = totalEarnedXp === 0 ? 0 : Math.min(100, (xpInCurrentLevel / XP_PER_LEVEL) * 100);
     const rankData = calculateProductivityScore(tasks);
+    const xpLevelLabel = getLevelLabel(currentLevel);
 
     const weeklyStreak = (() => {
       if (!tasks || tasks.length === 0) return 0;
@@ -183,7 +185,9 @@ function Dashboard() {
       xpInCurrentLevel,
       xpProgressPercentage,
       totalEarnedXp,
-      rankLabel: rankData.levelLabel,
+      xpToNext,
+      xpLevelLabel,
+      rankLabel: gamificationStats?.levelName ?? rankData.levelLabel,
       weeklyStreak,
       globalTopPercentage,
       streakDays: gamificationStats?.currentStreak ?? 0,
@@ -378,8 +382,9 @@ function Dashboard() {
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">Current Standing</p>
                 <div className="mt-4 flex items-baseline gap-2">
                   <span className="text-5xl font-black tracking-tight text-ink">Level {userStats.currentLevel}</span>
-                  <span className="text-sm font-semibold text-purple-400">+{userStats.totalEarnedXp} XP</span>
+                  <span className="text-sm font-semibold text-purple-400">{userStats.xpLevelLabel}</span>
                 </div>
+               
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-hair border border-hair text-purple-400">
                 <FaTrophy size={16} />
@@ -389,7 +394,7 @@ function Dashboard() {
             <div className="mt-8">
               <div className="flex justify-between text-xs font-medium text-muted">
                 <span>Mastery Progress</span>
-                <span className="text-sub">{userStats.xpInCurrentLevel} / 1,000 XP</span>
+                <span className="text-sub">{userStats.xpInCurrentLevel} / {XP_PER_LEVEL} XP</span>
               </div>
               <div className="mt-2.5 h-2 w-full rounded-full bg-hair">
                 <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500" style={{ width: `${userStats.xpProgressPercentage}%` }} />
@@ -397,10 +402,11 @@ function Dashboard() {
             </div>
 
             <div className="mt-8 grid grid-cols-3 gap-4 border-t border-hair pt-5">
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Rank</p><p className="mt-1 text-lg font-bold text-ink">{userStats.rankLabel}</p></div>
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Weekly Streak</p><p className="mt-1 text-lg font-bold text-ink">{userStats.streakDays} Days</p></div>
-              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Global Top</p><p className="mt-1 text-lg font-bold text-purple-400">{userStats.globalTopPercentage}%</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Current Rank</p><p className="mt-1 text-lg font-bold text-ink">{userStats.rankLabel}</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Next Level</p><p className="mt-1 text-lg font-bold text-ink">{userStats.xpToNext} XP</p></div>
+              <div><p className="text-[10px] font-bold uppercase tracking-wider text-muted">Total XP</p><p className="mt-1 text-lg font-bold text-purple-400">{userStats.totalEarnedXp} XP</p></div>
             </div>
+            <p className="mt-4 text-[11px] text-muted">This is one unified progression system based on XP from tasks and focus sessions.</p>
           </div>
 
           <div className="flex flex-col justify-between rounded-3xl bg-hair backdrop-blur-xl p-6 text-center border border-hair">

@@ -38,10 +38,18 @@ const createTask = asyncHandler(async (req, res) => {
     throw new Error('Title is required');
   }
 
-  const task = await Task.create({
+  const taskData = {
     ...normalizeTaskBody(req.body),
     user: req.user._id,
-  });
+  };
+
+  if (taskData.status === 'done') {
+    taskData.completedAt = new Date();
+  } else {
+    taskData.completedAt = null;
+  }
+
+  const task = await Task.create(taskData);
 
   res.status(201).json(task);
 });
@@ -59,10 +67,29 @@ const updateTask = asyncHandler(async (req, res) => {
     throw new Error('Not allowed');
   }
 
-  const updated = await Task.findByIdAndUpdate(req.params.id, normalizeTaskBody(req.body), {
+  const updatePayload = normalizeTaskBody(req.body);
+  const nextStatus = updatePayload.status ?? task.status;
+
+  console.log('[DEBUG updateTask] req.body:', req.body);
+  console.log('[DEBUG updateTask] task status from DB:', task.status);
+  console.log('[DEBUG updateTask] nextStatus:', nextStatus);
+
+  if (nextStatus === 'done' && task.status !== 'done') {
+    updatePayload.completedAt = new Date();
+    console.log('[DEBUG updateTask] Setting completedAt to now:', updatePayload.completedAt);
+  } else if (nextStatus !== 'done' && task.status === 'done') {
+    updatePayload.completedAt = null;
+    console.log('[DEBUG updateTask] Resetting completedAt to null');
+  }
+
+  console.log('[DEBUG updateTask] final updatePayload:', updatePayload);
+
+  const updated = await Task.findByIdAndUpdate(req.params.id, updatePayload, {
     new: true,
     runValidators: true,
   });
+
+  console.log('[DEBUG updateTask] updated doc in DB:', updated);
 
   if (updated.status === 'done' && task.status !== 'done') {
     await awardTaskCompletion(req.user._id);

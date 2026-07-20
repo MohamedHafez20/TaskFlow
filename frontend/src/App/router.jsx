@@ -2,6 +2,7 @@ import { Navigate, RouterProvider } from "react-router-dom";
 import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Loader from "../components/Ui/Loader";
+import ErrorFallback from "../components/Ui/ErrorFallback";
 import Profile from "../pages/Profile";
 import BrainDump from "../pages/BrainDump";
 
@@ -27,27 +28,33 @@ const Layout = lazy(() => import("../components/layout/Layout"));
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />
+    element: <Home />,
+    errorElement: <ErrorFallback />
   },
   {
     path: "/home",
-    element: <Home />
+    element: <Home />,
+    errorElement: <ErrorFallback />
   },
   {
     path: "/login",
-    element: <Login />
+    element: <Login />,
+    errorElement: <ErrorFallback />
   },
   {
     path: "/register",
-    element: <Register />
+    element: <Register />,
+    errorElement: <ErrorFallback />
   },
   {
     path: "/forgot-password",
-    element: <ForgotPassword />
+    element: <ForgotPassword />,
+    errorElement: <ErrorFallback />
   },
   {
     path: "/app",
     element: <ProtectedRoute><Layout /></ProtectedRoute>,
+    errorElement: <ErrorFallback />,
     children: [
       {
         path: "dashboard",
@@ -101,7 +108,8 @@ const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <NotFound />
+    element: <NotFound />,
+    errorElement: <ErrorFallback />
   }
 ]);
 

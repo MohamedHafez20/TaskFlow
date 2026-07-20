@@ -81,7 +81,7 @@ function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-hair bg-hair text-sub"
+            className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-hair bg-hair text-sub"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <FaTimes size={16} /> : <FaBars size={16} />}

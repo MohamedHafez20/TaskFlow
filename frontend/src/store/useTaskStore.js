@@ -211,6 +211,7 @@ const useTaskStore = create((set, get) => ({
               priority: updatedData.priority,
               status: updatedData.status,
               completed: updatedData.status === 'done',
+              completedAt: updatedData.completedAt,
               category: updatedData.description || analyzed.category,
               estimatedTime: analyzed.estimatedTime,
               pomodoroCompleted: pCompleted,

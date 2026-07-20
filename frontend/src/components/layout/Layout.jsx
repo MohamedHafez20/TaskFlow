@@ -50,7 +50,7 @@ function Layout() {
       <div className="relative z-10 flex min-h-screen overflow-hidden">
         <SideBar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
-        <div className="flex flex-1 flex-col min-h-0 overflow-hidden md:pl-[260px]">
+        <div className="flex flex-1 flex-col min-h-0 overflow-hidden lg:pl-[260px]">
           <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
           <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">

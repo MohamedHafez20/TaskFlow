@@ -1,5 +1,10 @@
 export const XP_PER_LEVEL = 1000;
 
+export const XP_REWARDS = {
+  task: 20,
+  focusSession: 15,
+};
+
 export const LEVEL_LABELS = [
   { maxLevel: 2, label: 'Beginner' },
   { maxLevel: 4, label: 'Explorer' },
@@ -18,13 +23,36 @@ export const BADGES = [
   { id: 'level_5', label: 'Rising Star', points: 250, icon: '👑' },
 ];
 
+export const getLevelFromXp = (xp) => {
+  return Math.max(1, Math.floor(xp / XP_PER_LEVEL) + 1);
+};
+
 export const getLevelLabel = (level) => {
   const entry = LEVEL_LABELS.find((item) => level <= item.maxLevel);
   return entry ? entry.label : 'Legend';
 };
 
+export const getLevelThresholds = (maxLevels = 10) => {
+  const thresholds = [];
+
+  for (let level = 1; level <= maxLevels; level += 1) {
+    const minXp = (level - 1) * XP_PER_LEVEL;
+    const maxXp = level * XP_PER_LEVEL - 1;
+
+    thresholds.push({
+      level,
+      minXp,
+      maxXp,
+      label: getLevelLabel(level),
+      rangeText: level === maxLevels ? `${minXp.toLocaleString()}+ XP` : `${minXp.toLocaleString()}–${maxXp.toLocaleString()} XP`,
+    });
+  }
+
+  return thresholds;
+};
+
 export const getLevelProgress = (xp) => {
-  const level = Math.max(1, Math.floor(xp / XP_PER_LEVEL) + 1);
+  const level = getLevelFromXp(xp);
   const xpInLevel = xp % XP_PER_LEVEL;
   const xpToNext = XP_PER_LEVEL - xpInLevel;
   return { level, xpInLevel, xpToNext };

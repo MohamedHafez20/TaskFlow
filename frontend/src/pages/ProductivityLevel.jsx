@@ -1,14 +1,15 @@
-import { motion } from 'framer-motion';
+﻿import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import useTaskStore from '../store/useTaskStore';
 import { FaTrophy, FaStar, FaMedal, FaAward, FaCheckCircle, FaFire } from 'react-icons/fa';
 import usePageTitle from '../hooks/usePageTitle';
-import { calculateProductivityScore } from '../utils/helpers';
+import { getLevelLabel, getLevelProgress, XP_PER_LEVEL } from '../constants/gamification';
 
 function ProductivityLevel() {
   usePageTitle('Productivity Level');
 
   const tasks = useTaskStore((s) => s.tasks);
+  const gamificationStats = useTaskStore((s) => s.gamificationStats);
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 5;
 
@@ -24,20 +25,38 @@ function ProductivityLevel() {
     const total = tasks.length;
     const completed = completedTasks.length;
     const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
-    const productivityScore = calculateProductivityScore(tasks);
 
+    const baseScore = completionRate;
+    const highPriorityBonus = tasks.filter((t) => t.priority === 'high' && t.completed).length * 10;
+    const recentBonus = tasks.filter((t) => {
+      const taskDate = new Date(t.createdAt);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return taskDate >= weekAgo && t.completed;
+    }).length * 5;
+
+    const productivityScore = Math.min(100, baseScore + highPriorityBonus + recentBonus);
+
+    const totalXp = gamificationStats?.xp ?? 0;
+    const levelProgress = getLevelProgress(totalXp);
+    const levelNumber = gamificationStats?.level ?? levelProgress.level;
+    const level = gamificationStats?.levelName ?? getLevelLabel(levelNumber);
+    const xpInCurrentLevel = gamificationStats?.xpInCurrentLevel ?? levelProgress.xpInLevel;
+    const xpToNext = gamificationStats?.xpToNextLevel ?? levelProgress.xpToNext;
+    const xpProgressPercentage = totalXp === 0 ? 0 : Math.min(100, (xpInCurrentLevel / XP_PER_LEVEL) * 100);
     let levelColor = 'text-muted';
     let levelIcon = FaStar;
-    if (productivityScore.levelNumber >= 6) {
+
+    if (levelNumber >= 6) {
       levelColor = 'text-yellow-400';
       levelIcon = FaTrophy;
-    } else if (productivityScore.levelNumber >= 5) {
+    } else if (levelNumber >= 5) {
       levelColor = 'text-purple-400';
       levelIcon = FaAward;
-    } else if (productivityScore.levelNumber >= 4) {
+    } else if (levelNumber >= 4) {
       levelColor = 'text-blue-400';
       levelIcon = FaMedal;
-    } else if (productivityScore.levelNumber >= 3) {
+    } else if (levelNumber >= 3) {
       levelColor = 'text-fuchsia-400';
       levelIcon = FaFire;
     }
@@ -46,15 +65,23 @@ function ProductivityLevel() {
       total,
       completed,
       completionRate,
-      productivityScore: productivityScore.productivityScore,
-      level: productivityScore.levelLabel,
-      levelNumber: productivityScore.levelNumber,
+      productivityScore,
+      level,
+      levelNumber,
+      xpInCurrentLevel,
+      xpToNext,
+      xpProgressPercentage,
       levelColor,
       levelIcon,
-      highPriorityCompleted: productivityScore.highPriorityCompleted,
-      recentCompleted: productivityScore.recentCompleted
+      highPriorityCompleted: tasks.filter((t) => t.priority === 'high' && t.completed).length,
+      recentCompleted: tasks.filter((t) => {
+        const taskDate = new Date(t.createdAt);
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return taskDate >= weekAgo && t.completed;
+      }).length
     };
-  }, [tasks, completedTasks]);
+  }, [tasks, completedTasks, gamificationStats]);
 
   const LevelIcon = productivityStats.levelIcon;
 
@@ -78,30 +105,30 @@ function ProductivityLevel() {
         <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 mb-6">
           <LevelIcon className="text-4xl text-ink" />
         </div>
-        <h2 className={`text-4xl font-bold mb-2 ${productivityStats.levelColor}`}>
-          {productivityStats.level}
+        <h2 className="text-4xl font-bold mb-2 text-ink">
+          Current Rank
         </h2>
-        <p className="text-muted mb-6 text-base">Current Rank</p>
-
-        {/* Score Display */}
-        <div className="flex items-baseline justify-center gap-2 mb-8">
-          <span className="text-6xl font-bold text-ink">{productivityStats.productivityScore}</span>
-          <span className="text-2xl text-muted">/100</span>
+        <div className="mb-8 inline-flex items-center justify-center rounded-full border border-hair bg-hair/70 px-4 py-2 text-sm font-semibold text-sub">
+          <span className={`text-base ${productivityStats.levelColor}`}>
+            {productivityStats.level}
+          </span>
+          <span className="mx-2 text-muted">•</span>
+          <span className="text-muted">Level {productivityStats.levelNumber}</span>
         </div>
 
-        {/* Progress Bar */}
+        {/* XP Progress Bar */}
         <div className="w-full max-w-md mx-auto">
           <div className="h-3 w-full rounded-full bg-hair relative overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${productivityStats.productivityScore}%` }}
+              animate={{ width: `${productivityStats.xpProgressPercentage}%` }}
               transition={{ duration: 1, delay: 0.5 }}
               className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500"
             />
           </div>
           <div className="flex justify-between text-[10px] text-muted mt-3 font-medium">
-            <span>System Score</span>
-            <span>{productivityStats.productivityScore}%</span>
+            <span>{productivityStats.xpInCurrentLevel} / {XP_PER_LEVEL} XP in this level</span>
+            <span>{productivityStats.xpToNext} XP to next level</span>
           </div>
         </div>
       </div>

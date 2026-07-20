@@ -88,7 +88,7 @@ function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }) {
         className={`w-full max-w-[260px] h-screen border-r border-hair p-6 backdrop-blur-2xl flex flex-col justify-between transition-all overflow-hidden shrink-0 ${
           isMobileMenuOpen
             ? 'fixed inset-y-0 left-0 z-50 shadow-2xl'
-            : 'hidden md:flex md:fixed md:inset-y-0 md:left-0 md:z-40'
+            : 'hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-40'
         }`}
       >
         <div className="space-y-7 flex flex-col flex-1 overflow-hidden">
